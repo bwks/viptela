@@ -95,7 +95,7 @@ class Viptela(object):
             self.session.verify = self.verify
 
         # login
-        self.login_result = Viptela._post(
+        self.login_result = self._post(
             session=self.session,
             url='{0}/j_security_check'.format(self.base_url),
             headers={'Content-Type': 'application/x-www-form-urlencoded'},
