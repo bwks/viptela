@@ -1,5 +1,7 @@
 import requests
 
+from collections import namedtuple
+
 HTTP_RESPONSE_CODES = {
     200: 'Success',
     400: 'Bad Request',
@@ -8,19 +10,28 @@ HTTP_RESPONSE_CODES = {
     500: 'Internal Server Error'
 }
 
+Result = namedtuple('Result', ['ok', 'status_code', 'error', 'json', 'response'])
+
+
+def parse_response(response):
+    """
+    Parse a request response object
+    :return:
+    """
+    result = Result(
+        ok=response.ok,
+        status_code=response.status_code,
+        error=response.reason,
+        json=response.json(),
+        response=response,
+    )
+    return result
+
 
 class Viptela(object):
     """
     Class for use with Viptela vManage API.
     """
-
-    @staticmethod
-    def parse_response():
-        """
-        Parse a request response object
-        :return:
-        """
-        pass
 
     @staticmethod
     def _get(session, url, headers=None):
@@ -34,7 +45,7 @@ class Viptela(object):
         if headers is None:
             headers = {'Connection': 'keep-alive', 'Content-Type': 'application/json'}
 
-        return session.get(url=url, headers=headers)
+        return parse_response(session.get(url=url, headers=headers))
 
     @staticmethod
     def _put(session, url, headers, data):
