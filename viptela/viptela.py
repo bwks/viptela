@@ -16,13 +16,24 @@ Result = namedtuple('Result', ['ok', 'status_code', 'error', 'json', 'response']
 def parse_response(response):
     """
     Parse a request response object
-    :return:
+    :return: namedtuple result object
     """
+    if not response.status_code == 200:
+        error = HTTP_RESPONSE_CODES[response.status_code]
+    else:
+        error = ''
+
+    try:
+        json_response = response.json()['data']
+    except KeyError:
+        json_response = dict()
+        error = 'No data received from device'
+
     result = Result(
         ok=response.ok,
         status_code=response.status_code,
-        error=response.reason,
-        json=response.json(),
+        error=error,
+        json=json_response,
         response=response,
     )
     return result
@@ -32,7 +43,6 @@ class Viptela(object):
     """
     Class for use with Viptela vManage API.
     """
-
     @staticmethod
     def _get(session, url, headers=None):
         """
