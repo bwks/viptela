@@ -13,6 +13,7 @@ HTTP_RESPONSE_CODES = {
     500: 'Internal Server Error'
 }
 
+# parse_response will return a namedtuple object
 Result = namedtuple('Result', [
     'ok', 'status_code', 'error', 'reason', 'data', 'response'
 ])
@@ -32,7 +33,7 @@ def parse_response(response):
 
     if response.request.method in ['GET']:
         try:
-            json_response = dict() if not response.json()['data'] else response.json()['data']
+            json_response = response.json()['data'] if response.json()['data'] else dict()
         except KeyError as e:
             json_response = dict()
             reason = 'No data received from device'
@@ -200,31 +201,61 @@ class Viptela(object):
     def get_device_maps(self):
         """
         Get devices geo location data
-        :return:
+        :return: Result named tuple
         """
         url = '{0}/group/map/devices'.format(self.base_url)
         return self._get(self.session, url)
 
     def get_arp_table(self, device_id):
+        """
+        Get device arp tables
+        :param device_id: device ID
+        :return: Result named tuple
+        """
         url = '{0}/device/arp?deviceId={1}'.format(self.base_url, device_id)
         return self._get(self.session, url)
 
     def get_bgp_summary(self, device_id):
+        """
+        Get BGP summary information
+        :param device_id: device ID
+        :return: Result named tuple
+        """
         url = '{0}/device/bgp/summary?deviceId={1}'.format(self.base_url, device_id)
         return self._get(self.session, url)
 
     def get_bgp_routes(self, device_id):
+        """
+        Get BGP routes
+        :param device_id: device ID
+        :return: Result named tuple
+        """
         url = '{0}/device/bgp/routes?deviceId={1}'.format(self.base_url, device_id)
         return self._get(self.session, url)
 
     def get_bgp_neighbours(self, device_id):
+        """
+        Get BGP neighbours
+        :param device_id: device ID
+        :return: Result named tuple
+        """
         url = '{0}/device/bgp/neighbors?deviceId={1}'.format(self.base_url, device_id)
         return self._get(self.session, url)
 
     def get_ospf_routes(self, device_id):
+        """
+        Get OSPF routes
+        :param device_id: device ID
+        :return: Result named tuple
+        """
         url = '{0}/device/ospf/routes?deviceId={1}'.format(self.base_url, device_id)
         return self._get(self.session, url)
 
     def get_ospf_neighbours(self, device_id):
+        """
+        Get OSPF neighbours
+        :param device_id: device ID
+        :return: Result named tuple
+        """
         url = '{0}/device/ospf/neighbor?deviceId={1}'.format(self.base_url, device_id)
         return self._get(self.session, url)
