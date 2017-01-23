@@ -1,6 +1,7 @@
 import requests
 
 from collections import namedtuple
+from . exceptions import LoginCredentialsError
 
 HTTP_RESPONSE_CODES = {
     200: 'Success',
@@ -140,7 +141,7 @@ class Viptela(object):
         )
 
         if login_result.response.text.startswith('<html>'):
-            raise ValueError('Could not login to device, check user credentials')
+            raise LoginCredentialsError('Could not login to device, check user credentials')
         else:
             self.login_result = login_result
 
