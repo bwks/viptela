@@ -139,7 +139,7 @@ class Viptela(object):
             data={'j_username': self.user, 'j_password': self.user_pass}
         )
 
-    def get_devices(self, device_type='vedges'):
+    def get_device_by_type(self, device_type='vedges'):
         """
         Get devices from vManage server
         :param device_type: Type of device
@@ -158,15 +158,17 @@ class Viptela(object):
         url = '{0}/device'.format(self.base_url)
         return self._get(self.session, url)
 
-    def get_running_config(self, device_id, xml=False):
-        """
-        Get running config of a device
-        :param device_id: Device's ID
-        :param xml: Return config in XML format
-        :return:
-        """
-        url = '{0}/template/config/running/{1}'.format(self.base_url, device_id)
-        return self._get(self.session, url)
+# Not working
+#     def get_running_config(self, device_id, xml=False):
+#         """
+#         Get running config of a device
+#         :param device_id: Device's ID
+#         :param xml: Return config in XML format
+#         :return:
+#         """
+#         # url = '{0}/template/config/running/{1}'.format(self.base_url, device_id)
+#         # url = '{0}/config?deviceId={1}'.format(self.base_url, device_id)
+#         return self._get(self.session, url)
 
     def get_device_maps(self):
         """
