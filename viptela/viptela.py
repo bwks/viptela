@@ -14,7 +14,7 @@ HTTP_RESPONSE_CODES = {
 }
 
 Result = namedtuple('Result', [
-    'ok', 'status_code', 'error', 'reason', 'json', 'response'
+    'ok', 'status_code', 'error', 'reason', 'data', 'response'
 ])
 
 
@@ -32,7 +32,7 @@ def parse_response(response):
 
     if response.request.method in ['GET']:
         try:
-            json_response = response.json()['data']
+            json_response = dict() if not response.json()['data'] else response.json()['data']
         except KeyError as e:
             json_response = dict()
             reason = 'No data received from device'
@@ -49,7 +49,7 @@ def parse_response(response):
         status_code=response.status_code,
         reason=reason,
         error=error,
-        json=json_response,
+        data=json_response,
         response=response,
     )
     return result
@@ -199,4 +199,12 @@ class Viptela(object):
 
     def get_bgp_neighbours(self, device_id):
         url = '{0}/device/bgp/neighbors?deviceId={1}'.format(self.base_url, device_id)
+        return self._get(self.session, url)
+
+    def get_ospf_routes(self, device_id):
+        url = '{0}/device/ospf/routes?deviceId={1}'.format(self.base_url, device_id)
+        return self._get(self.session, url)
+
+    def get_ospf_neighbours(self, device_id):
+        url = '{0}/device/ospf/neighbor?deviceId={1}'.format(self.base_url, device_id)
         return self._get(self.session, url)
