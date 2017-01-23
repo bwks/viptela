@@ -9,6 +9,7 @@ HTTP_RESPONSE_CODES = {
     403: 'Forbidden',
     404: 'API Not found',
     406: 'Not Acceptable Response',
+    415: 'Unsupported Media Type',
     500: 'Internal Server Error'
 }
 
