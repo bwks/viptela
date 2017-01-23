@@ -132,12 +132,17 @@ class Viptela(object):
             self.session.verify = self.verify
 
         # login
-        self.login_result = self._post(
+        login_result = self._post(
             session=self.session,
             url='{0}/j_security_check'.format(self.base_url),
             headers={'Content-Type': 'application/x-www-form-urlencoded'},
             data={'j_username': self.user, 'j_password': self.user_pass}
         )
+
+        if login_result.response.text.startswith('<html>'):
+            raise ValueError('Could not login to device, check user credentials')
+        else:
+            self.login_result = login_result
 
     def get_device_by_type(self, device_type='vedges'):
         """
