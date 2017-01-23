@@ -10,7 +10,9 @@ HTTP_RESPONSE_CODES = {
     500: 'Internal Server Error'
 }
 
-Result = namedtuple('Result', ['ok', 'status_code', 'error', 'reason', 'json', 'response'])
+Result = namedtuple('Result', [
+    'ok', 'status_code', 'error', 'reason', 'json', 'response'
+])
 
 
 def parse_response(response):
@@ -147,6 +149,14 @@ class Viptela(object):
         url = '{0}/system/device/{1}'.format(self.base_url, device_type)
         return self._get(self.session, url)
 
+    def get_all_devices(self):
+        """
+        Get a list of all devices
+        :return:
+        """
+        url = '{0}/device'.format(self.base_url)
+        return self._get(self.session, url)
+
     def get_running_config(self, device_id, xml=False):
         """
         Get running config of a device
@@ -164,3 +174,4 @@ class Viptela(object):
         """
         url = '{0}/group/map/devices'.format(self.base_url)
         return self._get(self.session, url)
+
