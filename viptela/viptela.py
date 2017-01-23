@@ -74,7 +74,7 @@ class Viptela(object):
         return parse_response(session.get(url=url, headers=headers))
 
     @staticmethod
-    def _put(session, url, headers, data):
+    def _put(session, url, headers=None, data=None):
         """
         Perform a HTTP put
         :param session: requests session
@@ -83,10 +83,16 @@ class Viptela(object):
         :param data: Data payload
         :return:
         """
+        if headers is None:
+            # add default headers for put
+            headers = dict()
+
+        if data is None:
+            data = dict()
         pass
 
     @staticmethod
-    def _post(session, url, headers, data):
+    def _post(session, url, headers=None, data=None):
         """
         Perform a HTTP post
         :param session: requests session
@@ -95,10 +101,17 @@ class Viptela(object):
         :param data: Data payload
         :return:
         """
+        if headers is None:
+            # add default headers for post
+            headers = dict()
+
+        if data is None:
+            data = dict()
+
         return parse_response(session.post(url=url, headers=headers, data=data))
 
     @staticmethod
-    def _delete(session, url, headers, data):
+    def _delete(session, url, headers=None, data=None):
         """
         Perform a HTTP delete
         :param session: requests session
@@ -107,6 +120,13 @@ class Viptela(object):
         :param data: Data payload
         :return:
         """
+        if headers is None:
+            # add default headers for delete
+            headers = dict()
+
+        if data is None:
+            data = dict()
+
         pass
 
     def __init__(self, user, user_pass, vmanage_server, vmanage_server_port=8443, verify=False):
