@@ -10,28 +10,39 @@ HTTP_RESPONSE_CODES = {
     500: 'Internal Server Error'
 }
 
-Result = namedtuple('Result', ['ok', 'status_code', 'error', 'json', 'response'])
+Result = namedtuple('Result', ['ok', 'status_code', 'error', 'reason', 'json', 'response'])
 
 
 def parse_response(response):
     """
     Parse a request response object
+    :param response: requests response object
     :return: namedtuple result object
     """
     if not response.status_code == 200:
-        error = HTTP_RESPONSE_CODES[response.status_code]
+        reason, error = HTTP_RESPONSE_CODES[response.status_code]
     else:
+        reason = HTTP_RESPONSE_CODES[response.status_code]
         error = ''
 
-    try:
-        json_response = response.json()['data']
-    except KeyError:
+    if response.request.method in ['GET']:
+        try:
+            json_response = response.json()['data']
+        except KeyError as e:
+            json_response = dict()
+            reason = 'No data received from device'
+            error = e
+        except ValueError as e:
+            json_response = dict()
+            reason = 'No data received from device'
+            error = e
+    else:
         json_response = dict()
-        error = 'No data received from device'
 
     result = Result(
         ok=response.ok,
         status_code=response.status_code,
+        reason=reason,
         error=error,
         json=json_response,
         response=response,
@@ -79,7 +90,7 @@ class Viptela(object):
         :param data: Data payload
         :return:
         """
-        return session.post(url=url, headers=headers, data=data)
+        return parse_response(session.post(url=url, headers=headers, data=data))
 
     @staticmethod
     def _delete(session, url, headers, data):
