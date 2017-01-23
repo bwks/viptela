@@ -166,16 +166,16 @@ class Viptela(object):
         return self._get(self.session, url)
 
 # Not working
-#     def get_running_config(self, device_id, xml=False):
-#         """
-#         Get running config of a device
-#         :param device_id: Device's ID
-#         :param xml: Return config in XML format
-#         :return:
-#         """
-#         # url = '{0}/template/config/running/{1}'.format(self.base_url, device_id)
-#         # url = '{0}/config?deviceId={1}'.format(self.base_url, device_id)
-#         return self._get(self.session, url)
+#    def get_running_config(self, device_id, xml=False):
+#        """
+#        Get running config of a device
+#        :param device_id: Device's ID
+#        :param xml: Return config in XML format
+#        :return:
+#        """
+#        # url = '{0}/template/config/running/{1}'.format(self.base_url, device_id)
+#        # url = '{0}/config?deviceId={1}'.format(self.base_url, device_id)
+#        return self._get(self.session, url)
 
     def get_device_maps(self):
         """
@@ -185,3 +185,18 @@ class Viptela(object):
         url = '{0}/group/map/devices'.format(self.base_url)
         return self._get(self.session, url)
 
+    def get_arp_table(self, device_id):
+        url = '{0}/device/arp?deviceId={1}'.format(self.base_url, device_id)
+        return self._get(self.session, url)
+
+    def get_bgp_summary(self, device_id):
+        url = '{0}/device/bgp/summary?deviceId={1}'.format(self.base_url, device_id)
+        return self._get(self.session, url)
+
+    def get_bgp_routes(self, device_id):
+        url = '{0}/device/bgp/routes?deviceId={1}'.format(self.base_url, device_id)
+        return self._get(self.session, url)
+
+    def get_bgp_neighbours(self, device_id):
+        url = '{0}/device/bgp/neighbors?deviceId={1}'.format(self.base_url, device_id)
+        return self._get(self.session, url)
