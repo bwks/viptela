@@ -25,13 +25,19 @@ def parse_response(response):
     :param response: requests response object
     :return: namedtuple result object
     """
-    if not response.status_code == 200:
+    if response.status_code == 400:
+        json_response = dict()
+        reason = response.json()['error']['details']
+        error = response.json()['error']['message']
+
+    elif not response.status_code == 200:
         reason, error = HTTP_RESPONSE_CODES[response.status_code]
+
     else:
         reason = HTTP_RESPONSE_CODES[response.status_code]
         error = ''
 
-    if response.request.method in ['GET']:
+    if response.request.method in ['GET'] and not response.status_code == 400:
         try:
             json_response = response.json()['data'] if response.json()['data'] else dict()
         except KeyError as e:
@@ -258,4 +264,26 @@ class Viptela(object):
         :return: Result named tuple
         """
         url = '{0}/device/ospf/neighbor?deviceId={1}'.format(self.base_url, device_id)
+        return self._get(self.session, url)
+
+    def get_ospf_database(self, device_id, summary=False):
+        """
+        Get OSPF database
+        :param device_id: device ID
+        :param summary: get OSPF database summary
+        :return: Result named tuple
+        """
+        if not summary:
+            url = '{0}/device/ospf/database?deviceId={1}'.format(self.base_url, device_id)
+        else:
+            url = '{0}/device/ospf/databasesummary?deviceId={1}'.format(self.base_url, device_id)
+        return self._get(self.session, url)
+
+    def get_ospf_interfaces(self, device_id):
+        """
+        Get OSPF interfaces
+        :param device_id: device ID
+        :return: Result named tuple
+        """
+        url = '{0}/device/ospf/interface?deviceId={1}'.format(self.base_url, device_id)
         return self._get(self.session, url)
