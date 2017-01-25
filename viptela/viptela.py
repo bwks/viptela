@@ -25,6 +25,9 @@ def parse_response(response):
     :param response: requests response object
     :return: namedtuple result object
     """
+    # TODO: This is starting to get messy and needs clean up
+    # Potentially move parsing of HTTP codes to functions
+
     if response.status_code == 400:
         json_response = dict()
         reason = response.json()['error']['details']
