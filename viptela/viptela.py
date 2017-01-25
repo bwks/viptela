@@ -3,8 +3,11 @@ import requests
 from collections import namedtuple
 from . exceptions import LoginCredentialsError
 
-HTTP_RESPONSE_CODES = {
+HTTP_SUCCESS_CODES = {
     200: 'Success',
+}
+
+HTTP_ERROR_CODES = {
     400: 'Bad Request',
     403: 'Forbidden',
     404: 'API Not found',
@@ -13,36 +16,28 @@ HTTP_RESPONSE_CODES = {
     500: 'Internal Server Error'
 }
 
+HTTP_RESPONSE_CODES = dict()
+HTTP_RESPONSE_CODES.update(HTTP_SUCCESS_CODES)
+HTTP_RESPONSE_CODES.update(HTTP_ERROR_CODES)
+
+
 # parse_response will return a namedtuple object
 Result = namedtuple('Result', [
     'ok', 'status_code', 'error', 'reason', 'data', 'response'
 ])
 
 
-def parse_response(response):
+def parse_http_success(response):
     """
-    Parse a request response object
+    HTTP 2XX
     :param response: requests response object
     :return: namedtuple result object
     """
-    # TODO: This is starting to get messy and needs clean up
-    # Potentially move parsing of HTTP codes to functions
-
-    if response.status_code == 400:
-        json_response = dict()
-        reason = response.json()['error']['details']
-        error = response.json()['error']['message']
-
-    elif not response.status_code == 200:
-        reason, error = HTTP_RESPONSE_CODES[response.status_code]
-
-    else:
-        reason = HTTP_RESPONSE_CODES[response.status_code]
-        error = ''
-
-    if response.request.method in ['GET'] and not response.status_code == 400:
+    if response.request.method in ['GET']:
         try:
             json_response = response.json()['data'] if response.json()['data'] else dict()
+            reason = HTTP_RESPONSE_CODES[response.status_code]
+            error = ''
         except KeyError as e:
             json_response = dict()
             reason = 'No data received from device'
@@ -53,6 +48,8 @@ def parse_response(response):
             error = e
     else:
         json_response = dict()
+        reason = HTTP_RESPONSE_CODES[response.status_code]
+        error = ''
 
     result = Result(
         ok=response.ok,
@@ -63,6 +60,40 @@ def parse_response(response):
         response=response,
     )
     return result
+
+
+def parse_http_error(response):
+    """
+    HTTP 4XX and 5XX
+    :param response: requests response object
+    :return: namedtuple result object
+    """
+    json_response = dict()
+    reason = response.json()['error']['details']
+    error = response.json()['error']['message']
+
+    result = Result(
+        ok=response.ok,
+        status_code=response.status_code,
+        reason=reason,
+        error=error,
+        data=json_response,
+        response=response,
+    )
+    return result
+
+
+def parse_response(response):
+    """
+    Parse a request response object
+    :param response: requests response object
+    :return: namedtuple result object
+    """
+    if response.status_code in HTTP_SUCCESS_CODES:
+        return parse_http_success(response)
+
+    elif response.status_code in HTTP_ERROR_CODES:
+        return parse_http_error(response)
 
 
 class Viptela(object):
