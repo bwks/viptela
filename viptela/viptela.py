@@ -170,20 +170,28 @@ class Viptela(object):
 
         pass
 
-    def __init__(self, user, user_pass, vmanage_server, vmanage_server_port=8443, verify=False):
+    def __init__(self, user, user_pass, vmanage_server, vmanage_server_port=8443,
+                 verify=False, disable_warnings=False, timeout=10):
         """
         Init method for Viptela class
         :param user: API user name
         :param user_pass: API user password
         :param vmanage_server: vManage server IP address or Hostname
         :param vmanage_server_port: vManage API port
-        :param verify: Verify HTTPs certificate
+        :param verify: Verify HTTPs certificate verification
+        :param disable_warnings: Disable console warnings if ssl cert invalid
+        :param timeout: Timeout for request response
         """
         self.user = user
         self.user_pass = user_pass
         self.vmanage_server = vmanage_server
         self.vmanage_server_port = vmanage_server_port
         self.verify = verify
+        self.timeout = timeout
+        self.disable_warnings = disable_warnings
+
+        if self.disable_warnings:
+            requests.packages.urllib3.disable_warnings()
 
         self.base_url = 'https://{0}:{1}/dataservice'.format(
             self.vmanage_server,
