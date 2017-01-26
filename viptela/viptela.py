@@ -30,7 +30,7 @@ Result = namedtuple('Result', [
 
 def parse_http_success(response):
     """
-    HTTP 2XX
+    HTTP 2XX responses
     :param response: requests response object
     :return: namedtuple result object
     """
@@ -65,7 +65,7 @@ def parse_http_success(response):
 
 def parse_http_error(response):
     """
-    HTTP 4XX and 5XX
+    HTTP 4XX and 5XX responses
     :param response: requests response object
     :return: namedtuple result object
     """
@@ -129,7 +129,7 @@ class Viptela(object):
         """
         if headers is None:
             # add default headers for put
-            headers = dict()
+            headers = {'Connection': 'keep-alive', 'Content-Type': 'application/json'}
 
         if data is None:
             data = dict()
@@ -148,7 +148,7 @@ class Viptela(object):
         """
         if headers is None:
             # add default headers for post
-            headers = dict()
+            headers = {'Connection': 'keep-alive', 'Content-Type': 'application/json'}
 
         if data is None:
             data = dict()
@@ -168,7 +168,7 @@ class Viptela(object):
         """
         if headers is None:
             # add default headers for delete
-            headers = dict()
+            headers = {'Connection': 'keep-alive', 'Content-Type': 'application/json'}
 
         if data is None:
             data = dict()
