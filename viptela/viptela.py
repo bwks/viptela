@@ -1,7 +1,8 @@
 import requests
 
 from collections import namedtuple
-from . exceptions import LoginCredentialsError
+from requests.exceptions import ConnectionError
+from . exceptions import LoginCredentialsError, LoginTimeoutError
 
 HTTP_SUCCESS_CODES = {
     200: 'Success',
@@ -101,27 +102,29 @@ class Viptela(object):
     Class for use with Viptela vManage API.
     """
     @staticmethod
-    def _get(session, url, headers=None):
+    def _get(session, url, headers=None, timeout=10):
         """
         Perform a HTTP get
         :param session: requests session
         :param url: url to get
         :param headers: HTTP headers
+        :param timeout: Timeout for request response
         :return:
         """
         if headers is None:
             headers = {'Connection': 'keep-alive', 'Content-Type': 'application/json'}
 
-        return parse_response(session.get(url=url, headers=headers))
+        return parse_response(session.get(url=url, headers=headers, timeout=timeout))
 
     @staticmethod
-    def _put(session, url, headers=None, data=None):
+    def _put(session, url, headers=None, data=None, timeout=10):
         """
         Perform a HTTP put
         :param session: requests session
         :param url: url to get
         :param headers: HTTP headers
         :param data: Data payload
+        :param timeout: Timeout for request response
         :return:
         """
         if headers is None:
@@ -133,13 +136,14 @@ class Viptela(object):
         pass
 
     @staticmethod
-    def _post(session, url, headers=None, data=None):
+    def _post(session, url, headers=None, data=None, timeout=10):
         """
         Perform a HTTP post
         :param session: requests session
         :param url: url to post
         :param headers: HTTP headers
         :param data: Data payload
+        :param timeout: Timeout for request response
         :return:
         """
         if headers is None:
@@ -149,16 +153,17 @@ class Viptela(object):
         if data is None:
             data = dict()
 
-        return parse_response(session.post(url=url, headers=headers, data=data))
+        return parse_response(session.post(url=url, headers=headers, data=data, timeout=timeout))
 
     @staticmethod
-    def _delete(session, url, headers=None, data=None):
+    def _delete(session, url, headers=None, data=None, timeout=10):
         """
         Perform a HTTP delete
         :param session: requests session
         :param url: url to delete
         :param headers: HTTP headers
         :param data: Data payload
+        :param timeout: Timeout for request response
         :return:
         """
         if headers is None:
@@ -203,12 +208,16 @@ class Viptela(object):
             self.session.verify = self.verify
 
         # login
-        login_result = self._post(
-            session=self.session,
-            url='{0}/j_security_check'.format(self.base_url),
-            headers={'Content-Type': 'application/x-www-form-urlencoded'},
-            data={'j_username': self.user, 'j_password': self.user_pass}
-        )
+        try:
+            login_result = self._post(
+                session=self.session,
+                url='{0}/j_security_check'.format(self.base_url),
+                headers={'Content-Type': 'application/x-www-form-urlencoded'},
+                data={'j_username': self.user, 'j_password': self.user_pass},
+                timeout=self.timeout
+            )
+        except ConnectionError:
+            raise LoginTimeoutError('Could not connect to {0}'.format(self.vmanage_server))
 
         if login_result.response.text.startswith('<html>'):
             raise LoginCredentialsError('Could not login to device, check user credentials')
