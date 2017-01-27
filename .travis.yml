@@ -1,0 +1,14 @@
+# CI build file
+language: python
+python:
+  - "3.4"
+  - "2.7"
+before_install:
+    - pip install pytest pytest-cov
+    - pip install coveralls
+    - pip install mock
+    - pip install responses
+script:
+    - py.test --cov=viptela
+after_success:
+    - coveralls
