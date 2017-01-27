@@ -224,6 +224,14 @@ class Viptela(object):
         else:
             self.login_result = login_result
 
+    def get_banner(self):
+        """
+        Get vManager banner
+        :return:
+        """
+        url = '{0}/settings/banner'.format(self.base_url)
+        return self._get(self.session, url)
+
     def get_device_by_type(self, device_type='vedges'):
         """
         Get devices from vManage server
