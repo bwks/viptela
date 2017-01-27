@@ -10,7 +10,12 @@ except ImportError:
     from unittest import mock
 
 from viptela.exceptions import LoginTimeoutError, LoginCredentialsError
-from viptela.viptela import parse_http_success, parse_http_error, Result
+from viptela.viptela import (
+    parse_http_success,
+    parse_http_error,
+    Result,
+    HTTP_RESPONSE_CODES
+)
 
 
 @pytest.fixture
@@ -23,6 +28,19 @@ def fake_get_test(status=200, body=None):
                  content_type='application/json')
         resp = requests.get('http://test.com')
     return resp
+
+
+def test_http_response_codes_dict_has_expected_key_value_pairs():
+    http_response_codes = {
+        200: 'Success',
+        400: 'Bad Request',
+        403: 'Forbidden',
+        404: 'API Not found',
+        406: 'Not Acceptable Response',
+        415: 'Unsupported Media Type',
+        500: 'Internal Server Error'
+    }
+    assert http_response_codes == HTTP_RESPONSE_CODES
 
 
 def test_parse_http_success_returns_result_object():
