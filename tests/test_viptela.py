@@ -11,6 +11,7 @@ except ImportError:
 
 from viptela.exceptions import LoginTimeoutError, LoginCredentialsError
 from viptela.viptela import (
+    Viptela,
     parse_http_success,
     parse_http_error,
     Result,
@@ -79,3 +80,8 @@ def test_parse_http_error_returns_expected_result():
     assert resp.status_code == 400
     assert resp.reason == 'error_details'
     assert resp.error == 'error_message'
+
+
+def test_viptela_login_with_invalid_vmanage_host_raises_login_timeout_error():
+    with pytest.raises(LoginTimeoutError):
+        Viptela('1.1.1.250', 'blah', 'blah')
