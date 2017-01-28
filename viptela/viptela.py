@@ -332,10 +332,10 @@ class Viptela(object):
         :param summary: get OSPF database summary
         :return: Result named tuple
         """
-        if not summary:
-            url = '{0}/device/ospf/database?deviceId={1}'.format(self.base_url, device_id)
-        else:
+        if summary:
             url = '{0}/device/ospf/databasesummary?deviceId={1}'.format(self.base_url, device_id)
+        else:
+            url = '{0}/device/ospf/database?deviceId={1}'.format(self.base_url, device_id)
         return self._get(self.session, url)
 
     def get_ospf_interfaces(self, device_id):
@@ -345,4 +345,45 @@ class Viptela(object):
         :return: Result named tuple
         """
         url = '{0}/device/ospf/interface?deviceId={1}'.format(self.base_url, device_id)
+        return self._get(self.session, url)
+
+    def get_transport_connection(self, device_id):
+        """
+        Get underlying transport details
+        :param device_id: device ID
+        :return: Result named tuple
+        """
+        url = '{0}/device/transport/connection?deviceId={1}'.format(self.base_url, device_id)
+        return self._get(self.session, url)
+
+    def get_tunnel_statistics(self, device_id):
+        """
+        Get tunnel details
+        :param device_id: device ID
+        :return: Result named tuple
+        """
+        url = '{0}/device/tunnel/statistics?deviceId={1}'.format(self.base_url, device_id)
+        return self._get(self.session, url)
+
+    def get_omp_peers(self, device_id, from_vmanage=False):
+        """
+        Get OMP peers
+        :param device_id: device ID
+        :param from_vmanage: Get synced peers from vManage server
+        :return: Result named tuple
+        """
+        if from_vmanage:
+            url = '{0}/device/omp/synced/peers?deviceId={1}'.format(self.base_url, device_id)
+        else:
+            url = '{0}/device/omp/peers?deviceId={1}'.format(self.base_url, device_id)
+
+        return self._get(self.session, url)
+
+    def get_omp_summary(self, device_id):
+        """
+        Get OMP summary
+        :param device_id: device ID
+        :return: Result named tuple
+        """
+        url = '{0}/device/omp/summary?deviceId={1}'.format(self.base_url, device_id)
         return self._get(self.session, url)
