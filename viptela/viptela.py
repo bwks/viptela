@@ -181,7 +181,7 @@ class Viptela(object):
         pass
 
     def __init__(self, user, user_pass, vmanage_server, vmanage_server_port=8443,
-                 verify=False, disable_warnings=False, timeout=10):
+                 verify=False, disable_warnings=False, timeout=10, auto_login=True):
         """
         Init method for Viptela class
         :param user: API user name
@@ -191,6 +191,7 @@ class Viptela(object):
         :param verify: Verify HTTPs certificate verification
         :param disable_warnings: Disable console warnings if ssl cert invalid
         :param timeout: Timeout for request response
+        :param auto_login: Automatically login to vManage server
         """
         self.user = user
         self.user_pass = user_pass
@@ -203,6 +204,8 @@ class Viptela(object):
         if self.disable_warnings:
             requests.packages.urllib3.disable_warnings()
 
+        self.auto_login = auto_login
+
         self.base_url = 'https://{0}:{1}/dataservice'.format(
             self.vmanage_server,
             self.vmanage_server_port
@@ -213,6 +216,14 @@ class Viptela(object):
             self.session.verify = self.verify
 
         # login
+        if self.auto_login:
+            self.login_result = self.login()
+
+    def login(self):
+        """
+        Login to vManage server
+        :return: Result named tuple
+        """
         try:
             login_result = self._post(
                 session=self.session,
@@ -227,7 +238,7 @@ class Viptela(object):
         if login_result.response.text.startswith('<html>'):
             raise LoginCredentialsError('Could not login to device, check user credentials')
         else:
-            self.login_result = login_result
+            return login_result
 
     def get_banner(self):
         """

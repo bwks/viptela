@@ -31,6 +31,11 @@ def fake_get_test(status=200, body=None):
     return resp
 
 
+@pytest.fixture
+def base_viptela_no_login():
+    return Viptela('user', 'pass', 'test', auto_login=False)
+
+
 def test_http_response_codes_dict_has_expected_key_value_pairs():
     http_response_codes = {
         200: 'Success',
@@ -93,3 +98,16 @@ def test_parse_http_error_returns_expected_result():
 def test_viptela_login_with_invalid_vmanage_host_raises_login_timeout_error():
     with pytest.raises(LoginTimeoutError):
         Viptela('1.1.1.250', 'blah', 'blah')
+
+
+def test_viptela_instance_attributes(base_viptela_no_login):
+    viptela = base_viptela_no_login
+    assert viptela.user == 'user'
+    assert viptela.user_pass == 'pass'
+    assert viptela.vmanage_server == 'test'
+    assert viptela.vmanage_server_port == 8443
+    assert viptela.verify is False
+    assert viptela.disable_warnings is False
+    assert viptela.timeout == 10
+    assert viptela.auto_login is False
+    assert viptela.base_url == 'https://test:8443/dataservice'
