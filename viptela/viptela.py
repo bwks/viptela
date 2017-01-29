@@ -1,3 +1,4 @@
+import json
 import requests
 
 from collections import namedtuple
@@ -69,9 +70,14 @@ def parse_http_error(response):
     :param response: requests response object
     :return: namedtuple result object
     """
-    json_response = dict()
-    reason = response.json()['error']['details']
-    error = response.json()['error']['message']
+    try:
+        json_response = dict()
+        reason = response.json()['error']['details']
+        error = response.json()['error']['message']
+    except ValueError as e:
+        json_response = dict()
+        reason = HTTP_RESPONSE_CODES[response.status_code]
+        error = e
 
     result = Result(
         ok=response.ok,
@@ -133,7 +139,8 @@ class Viptela(object):
 
         if data is None:
             data = dict()
-        pass
+
+        return parse_response(session.put(url=url, headers=headers, data=data, timeout=timeout))
 
     @staticmethod
     def _post(session, url, headers=None, data=None, timeout=10):
@@ -227,16 +234,26 @@ class Viptela(object):
     def get_banner(self):
         """
         Get vManager banner
-        :return:
+        :return: Result named tuple
         """
-        url = '{0}/settings/banner'.format(self.base_url)
+        url = '{0}/settings/configuration/banner'.format(self.base_url)
         return self._get(self.session, url)
+
+    def set_banner(self, banner):
+        """
+        Set vManage banner
+        :param banner: Text of the banner
+        :return: Result named tuple
+        """
+        payload = {'mode': 'on', 'bannerDetail': banner}
+        url = '{0}/settings/configuration/banner'.format(self.base_url)
+        return self._put(self.session, url, data=json.dumps(payload))
 
     def get_device_by_type(self, device_type='vedges'):
         """
         Get devices from vManage server
         :param device_type: Type of device
-        :return:
+        :return: Result named tuple
         """
         if device_type not in ['vedges', 'controllers']:
             raise ValueError('Invalid device type: {0}'.format(device_type))
@@ -246,22 +263,20 @@ class Viptela(object):
     def get_all_devices(self):
         """
         Get a list of all devices
-        :return:
+        :return: Result named tuple
         """
         url = '{0}/device'.format(self.base_url)
         return self._get(self.session, url)
 
 # Not working
-#    def get_running_config(self, device_id, xml=False):
-#        """
-#        Get running config of a device
-#        :param device_id: Device's ID
-#        :param xml: Return config in XML format
-#        :return:
-#        """
-#        # url = '{0}/template/config/running/{1}'.format(self.base_url, device_id)
-#        # url = '{0}/config?deviceId={1}'.format(self.base_url, device_id)
-#        return self._get(self.session, url)
+    def get_running_config(self, device_uuid):
+        """
+        Get running config of a device
+        :param device_uuid: Device's ID
+        :return:
+        """
+        url = '{0}/template/config/running/{1}'.format(self.base_url, device_uuid)
+        return self._get(self.session, url)
 
     def get_device_maps(self):
         """
