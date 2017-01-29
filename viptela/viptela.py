@@ -36,18 +36,28 @@ def parse_http_success(response):
     :return: namedtuple result object
     """
     if response.request.method in ['GET']:
-        try:
-            json_response = response.json()['data'] if response.json()['data'] else dict()
+        reason = HTTP_RESPONSE_CODES[response.status_code]
+        error = ''
+        if response.json().get('data'):
+            json_response = response.json().get('data')
+        elif response.json().get('config'):
+            json_response = response.json().get('config')
+        else:
+            json_response = dict()
             reason = HTTP_RESPONSE_CODES[response.status_code]
-            error = ''
-        except KeyError as e:
-            json_response = dict()
-            reason = 'No data received from device'
-            error = e
-        except ValueError as e:
-            json_response = dict()
-            reason = 'No data received from device'
-            error = e
+            error = 'No data received from device'
+#        try:
+#            json_response = response.json()['data'] if response.json()['data'] else dict()
+#            reason = HTTP_RESPONSE_CODES[response.status_code]
+#            error = ''
+#        except KeyError as e:
+#            json_response = dict()
+#            reason = 'No data received from device'
+#            error = e
+#        except ValueError as e:
+#            json_response = dict()
+#            reason = 'No data received from device'
+#            error = e
     else:
         json_response = dict()
         reason = HTTP_RESPONSE_CODES[response.status_code]
@@ -268,14 +278,17 @@ class Viptela(object):
         url = '{0}/device'.format(self.base_url)
         return self._get(self.session, url)
 
-# Not working
-    def get_running_config(self, device_uuid):
+    def get_running_config(self, device_uuid, attached=False):
         """
         Get running config of a device
         :param device_uuid: Device's ID
-        :return:
+        :param attached: Device attached config
+        :return: Result named tuple
         """
-        url = '{0}/template/config/running/{1}'.format(self.base_url, device_uuid)
+        if attached:
+            url = '{0}/template/config/attached/{1}'.format(self.base_url, device_uuid)
+        else:
+            url = '{0}/template/config/running/{1}'.format(self.base_url, device_uuid)
         return self._get(self.session, url)
 
     def get_device_maps(self):
