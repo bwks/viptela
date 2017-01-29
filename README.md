@@ -1,10 +1,17 @@
-# viptela
-Python library for use with Viptela API.  
+# Viptela
+Python library for use with Viptela vManage API.  
 Requires [requests](http://docs.python-requests.org/en/master/)
 
 
 [![Build Status](https://travis-ci.org/bobthebutcher/netconnect.svg?branch=master)](https://travis-ci.org/bobthebutcher/viptela)
 [![Coverage Status](https://coveralls.io/repos/github/bobthebutcher/viptela/badge.svg?branch=master)](https://coveralls.io/github/bobthebutcher/viptela?branch=master) 
+
+### About
+[Viptela](http://viptela.com/) is an SD-WAN vendor with a solid rest API. 
+The API is documented on the vManage host and can be found by going to  
+`https://vmanage-hostname:port/apidocs`. Additional API documentation can be found on the  
+viptela site support portal `http://viptela.com/support/` (login required)
+
 
 ### Installation
 ```bash
