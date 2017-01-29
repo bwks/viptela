@@ -8,9 +8,9 @@ Requires [requests](http://docs.python-requests.org/en/master/)
 
 ### About
 [Viptela](http://viptela.com/) is an SD-WAN vendor with a solid rest API. 
-The API is documented on the vManage host and can be found by going to  
-`https://vmanage-hostname:port/apidocs`. Additional API documentation can be found on the  
-viptela site support portal `http://viptela.com/support/` (login required)
+The API is documented on the vManage host and can be found by going to 
+`https://vmanage-hostname:port/apidocs`. Additional API documentation can be 
+found on the viptela site support portal `http://viptela.com/support/` (login required)
 
 
 ### Installation
