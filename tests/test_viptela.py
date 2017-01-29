@@ -49,12 +49,12 @@ def test_parse_http_success_returns_result_object():
     assert isinstance(resp, Result)
 
 
-def test_parse_http_success_with_key_error_returns_expected_result():
+def test_parse_http_success_with_no_data_returns_expected_result():
     resp = parse_http_success(fake_get_test())
     assert resp.ok is True
     assert resp.data == {}
     assert resp.status_code == 200
-    assert resp.reason == 'No data received from device'
+    assert resp.reason == 'Success'
 
 
 def test_parse_http_success_returns_with_populated_data_dict_returns_list():
@@ -65,6 +65,14 @@ def test_parse_http_success_returns_with_populated_data_dict_returns_list():
 def test_parse_http_success_returns_json_with_empty_data_key_returns_empty_dict():
     resp = parse_http_success(fake_get_test(body=json.dumps({'data': []})))
     assert isinstance(resp.data, dict)
+
+
+def test_parse_http_success_with_config_key_returns_expected_result():
+    resp = parse_http_success(fake_get_test(body=json.dumps({'config': 'Some Config'})))
+    assert resp.ok is True
+    assert resp.data == 'Some Config'
+    assert resp.status_code == 200
+    assert resp.reason == 'Success'
 
 
 def test_parse_http_error_returns_expected_result():

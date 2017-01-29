@@ -46,18 +46,6 @@ def parse_http_success(response):
             json_response = dict()
             reason = HTTP_RESPONSE_CODES[response.status_code]
             error = 'No data received from device'
-#        try:
-#            json_response = response.json()['data'] if response.json()['data'] else dict()
-#            reason = HTTP_RESPONSE_CODES[response.status_code]
-#            error = ''
-#        except KeyError as e:
-#            json_response = dict()
-#            reason = 'No data received from device'
-#            error = e
-#        except ValueError as e:
-#            json_response = dict()
-#            reason = 'No data received from device'
-#            error = e
     else:
         json_response = dict()
         reason = HTTP_RESPONSE_CODES[response.status_code]
