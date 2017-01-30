@@ -1,3 +1,4 @@
 pytest
 mock
 responses
+pytest-cov
