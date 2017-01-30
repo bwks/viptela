@@ -414,3 +414,84 @@ class Viptela(object):
         """
         url = '{0}/device/omp/summary?deviceId={1}'.format(self.base_url, device_id)
         return self._get(self.session, url)
+
+    def get_cellular_modem(self, device_id):
+        """
+        Get Cellular modem details
+        :param device_id: device ID
+        :return: Result named tuple
+        """
+        url = '{0}/device/cellular/modem?deviceId={1}'.format(self.base_url, device_id)
+        return self._get(self.session, url)
+
+    def get_cellular_network(self, device_id):
+        """
+        Get Cellular network details
+        :param device_id: device ID
+        :return: Result named tuple
+        """
+        url = '{0}/device/cellular/network?deviceId={1}'.format(self.base_url, device_id)
+        return self._get(self.session, url)
+
+    def get_cellular_profiles(self, device_id):
+        """
+        Get Cellular profiles details
+        :param device_id: device ID
+        :return: Result named tuple
+        """
+        url = '{0}/device/cellular/profiles?deviceId={1}'.format(self.base_url, device_id)
+        return self._get(self.session, url)
+
+    def get_cellular_radio(self, device_id):
+        """
+        Get Cellular radio details
+        :param device_id: device ID
+        :return: Result named tuple
+        """
+        url = '{0}/device/cellular/radio?deviceId={1}'.format(self.base_url, device_id)
+        return self._get(self.session, url)
+
+    def get_cellular_status(self, device_id):
+        """
+        Get Cellular status details
+        :param device_id: device ID
+        :return: Result named tuple
+        """
+        url = '{0}/device/cellular/status?deviceId={1}'.format(self.base_url, device_id)
+        return self._get(self.session, url)
+
+    def get_cellular_sessions(self, device_id):
+        """
+        Get Cellular sessions details
+        :param device_id: device ID
+        :return: Result named tuple
+        """
+        url = '{0}/device/cellular/sessions?deviceId={1}'.format(self.base_url, device_id)
+        return self._get(self.session, url)
+
+    def get_ipsec_inbound(self, device_id):
+        """
+        Get IPsec inbound details
+        :param device_id: device ID
+        :return: Result named tuple
+        """
+        url = '{0}/device/ipsec/inbound?deviceId={1}'.format(self.base_url, device_id)
+        return self._get(self.session, url)
+
+    def get_ipsec_outbound(self, device_id):
+        """
+        Get IPsec outbound details
+        :param device_id: device ID
+        :return: Result named tuple
+        """
+        url = '{0}/device/ipsec/outbound?deviceId={1}'.format(self.base_url, device_id)
+        return self._get(self.session, url)
+
+    def get_ipsec_localsa(self, device_id):
+        """
+        Get IPsec local security association details
+        :param device_id: device ID
+        :return: Result named tuple
+        """
+        url = '{0}/device/ipsec/localsa?deviceId={1}'.format(self.base_url, device_id)
+        return self._get(self.session, url)
