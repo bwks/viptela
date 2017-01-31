@@ -39,9 +39,9 @@ def parse_http_success(response):
         reason = HTTP_RESPONSE_CODES[response.status_code]
         error = ''
         if response.json().get('data'):
-            json_response = response.json().get('data')
+            json_response = response.json()['data']
         elif response.json().get('config'):
-            json_response = response.json().get('config')
+            json_response = response.json()['config']
         else:
             json_response = dict()
             reason = HTTP_RESPONSE_CODES[response.status_code]
