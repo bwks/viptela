@@ -87,6 +87,14 @@ def test_parse_http_success_with_config_key_returns_expected_result():
     assert resp.reason == 'Success'
 
 
+def test_parse_http_success_with_template_definition_key_returns_expected_result():
+    resp = parse_http_success(fake_get_test(body=json.dumps({'templateDefinition': 'Some Template'})))
+    assert resp.ok is True
+    assert resp.data == 'Some Template'
+    assert resp.status_code == 200
+    assert resp.reason == 'Success'
+
+
 def test_parse_http_error_returns_expected_result():
     error_data = {
         'error': {
@@ -102,10 +110,9 @@ def test_parse_http_error_returns_expected_result():
     assert resp.error == 'error_message'
 
 
-# @pytest.mark.skip()
 def test_viptela_login_with_invalid_vmanage_host_raises_login_timeout_error():
     with pytest.raises(LoginTimeoutError):
-        Viptela('1.1.1.250', 'blah', 'blah')
+        Viptela('1.1.1.250', 'blah', 'blah', timeout=0.1)
 
 
 def test_viptela_instance_attributes(base_viptela_no_login):
@@ -119,6 +126,12 @@ def test_viptela_instance_attributes(base_viptela_no_login):
     assert viptela.timeout == 10
     assert viptela.auto_login is False
     assert viptela.base_url == 'https://test:8443/dataservice'
+
+
+def test_get_device_by_type_with_invalid_type_raises_value_error(base_viptela_no_login):
+    with pytest.raises(ValueError):
+        v = base_viptela_no_login
+        v.get_device_by_type('invalid')
 
 
 def test_method_urls():
@@ -144,4 +157,15 @@ def test_method_urls():
     assert v.get_omp_peers('12345') == 'https://test:8443/dataservice/device/omp/peers?deviceId=12345'
     assert v.get_omp_peers('12345', True) == 'https://test:8443/dataservice/device/omp/synced/peers?deviceId=12345'
     assert v.get_omp_summary('12345') == 'https://test:8443/dataservice/device/omp/summary?deviceId=12345'
+    assert v.get_cellular_modem('12345') == 'https://test:8443/dataservice/device/cellular/modem?deviceId=12345'
+    assert v.get_cellular_network('12345') == 'https://test:8443/dataservice/device/cellular/network?deviceId=12345'
+    assert v.get_cellular_profiles('12345') == 'https://test:8443/dataservice/device/cellular/profiles?deviceId=12345'
+    assert v.get_cellular_radio('12345') == 'https://test:8443/dataservice/device/cellular/radio?deviceId=12345'
+    assert v.get_cellular_status('12345') == 'https://test:8443/dataservice/device/cellular/status?deviceId=12345'
+    assert v.get_cellular_sessions('12345') == 'https://test:8443/dataservice/device/cellular/sessions?deviceId=12345'
+    assert v.get_ipsec_inbound('12345') == 'https://test:8443/dataservice/device/ipsec/inbound?deviceId=12345'
+    assert v.get_ipsec_outbound('12345') == 'https://test:8443/dataservice/device/ipsec/outbound?deviceId=12345'
+    assert v.get_ipsec_localsa('12345') == 'https://test:8443/dataservice/device/ipsec/localsa?deviceId=12345'
+    assert v.get_template_feature() == 'https://test:8443/dataservice/template/feature'
+    assert v.get_template_feature_object('12345') == 'https://test:8443/dataservice/template/feature/object/12345'
 

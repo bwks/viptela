@@ -499,9 +499,18 @@ class Viptela(object):
         return self._get(self.session, url)
 
     def get_template_feature(self):
+        """
+        Get all feature templates
+        :return: Result named tuple
+        """
         url = '{0}/template/feature'.format(self.base_url)
         return self._get(self.session, url)
 
     def get_template_feature_object(self, template_id):
+        """
+        Get a feature tempalte
+        :param template_id: template ID
+        :return: Result named tuple
+        """
         url = '{0}/template/feature/object/{1}'.format(self.base_url, template_id)
         return self._get(self.session, url)
