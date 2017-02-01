@@ -42,6 +42,8 @@ def parse_http_success(response):
             json_response = response.json()['data']
         elif response.json().get('config'):
             json_response = response.json()['config']
+        elif response.json().get('templateDefinition'):
+            json_response = response.json()['templateDefinition']
         else:
             json_response = dict()
             reason = HTTP_RESPONSE_CODES[response.status_code]
@@ -494,4 +496,12 @@ class Viptela(object):
         :return: Result named tuple
         """
         url = '{0}/device/ipsec/localsa?deviceId={1}'.format(self.base_url, device_id)
+        return self._get(self.session, url)
+
+    def get_template_feature(self):
+        url = '{0}/template/feature'.format(self.base_url)
+        return self._get(self.session, url)
+
+    def get_template_feature_object(self, template_id):
+        url = '{0}/template/feature/object/{1}'.format(self.base_url, template_id)
         return self._get(self.session, url)
