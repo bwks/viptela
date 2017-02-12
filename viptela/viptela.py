@@ -498,19 +498,14 @@ class Viptela(object):
         url = '{0}/device/ipsec/localsa?deviceId={1}'.format(self.base_url, device_id)
         return self._get(self.session, url)
 
-    def get_template_feature(self):
+    def get_template_feature(self, template_id=''):
         """
-        Get all feature templates
-        :return: Result named tuple
-        """
-        url = '{0}/template/feature'.format(self.base_url)
-        return self._get(self.session, url)
-
-    def get_template_feature_object(self, template_id):
-        """
-        Get a feature tempalte
+        Get feature templates
         :param template_id: template ID
         :return: Result named tuple
         """
-        url = '{0}/template/feature/object/{1}'.format(self.base_url, template_id)
+        if template_id:
+            url = '{0}/template/feature/object/{1}'.format(self.base_url, template_id)
+        else:
+            url = '{0}/template/feature'.format(self.base_url)
         return self._get(self.session, url)

@@ -167,5 +167,5 @@ def test_method_urls():
     assert v.get_ipsec_outbound('12345') == 'https://test:8443/dataservice/device/ipsec/outbound?deviceId=12345'
     assert v.get_ipsec_localsa('12345') == 'https://test:8443/dataservice/device/ipsec/localsa?deviceId=12345'
     assert v.get_template_feature() == 'https://test:8443/dataservice/template/feature'
-    assert v.get_template_feature_object('12345') == 'https://test:8443/dataservice/template/feature/object/12345'
+    assert v.get_template_feature('12345') == 'https://test:8443/dataservice/template/feature/object/12345'
 
