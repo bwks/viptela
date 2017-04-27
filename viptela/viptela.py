@@ -22,6 +22,17 @@ HTTP_RESPONSE_CODES = dict()
 HTTP_RESPONSE_CODES.update(HTTP_SUCCESS_CODES)
 HTTP_RESPONSE_CODES.update(HTTP_ERROR_CODES)
 
+DEVICE_MODEL_MAP = {
+    'vedge-cloud': {'name': 'vedge-cloud','displayName':'vEdge Cloud','deviceType': 'vedge'},
+    'vedge-100': {'name': 'vedge-100', 'displayName': 'vEdge 100', 'deviceType': 'vedge'},
+    'vedge-100-B': {'name':'vedge-100-B','displayName':'vEdge 100 B','deviceType':'vedge'},
+    'vedge-100-M': {'name':'vedge-100-M','displayName':'vEdge 100 M','deviceType':'vedge'},
+    'vedge-100-WM': {'name':'vedge-100-WM','displayName':'vEdge 100 WM','deviceType':'vedge'},
+    'vedge-1000': {'name':'vedge-1000','displayName':'vEdge 1000','deviceType':'vedge'},            
+    'vedge-2000': {'name':'vedge-2000','displayName':'vEdge 2000','deviceType':'vedge'},
+    'vmanage': {'name':'vmanage','displayName':'vManage','deviceType':'vmanage'},
+    'vsmart': {'name':'vsmart','displayName':'vSmart','deviceType':'vsmart'},            
+}
 
 # parse_response will return a namedtuple object
 Result = namedtuple('Result', [
@@ -35,19 +46,28 @@ def parse_http_success(response):
     :param response: requests response object
     :return: namedtuple result object
     """
-    if response.request.method in ['GET']:
+
+    if not response.content and response.request.method in ['GET', 'POST']:
+        json_response = dict()
         reason = HTTP_RESPONSE_CODES[response.status_code]
         error = ''
-        if response.json().get('data'):
-            json_response = response.json()['data']
-        elif response.json().get('config'):
-            json_response = response.json()['config']
-        elif response.json().get('templateDefinition'):
-            json_response = response.json()['templateDefinition']
-        else:
-            json_response = dict()
-            reason = HTTP_RESPONSE_CODES[response.status_code]
-            error = 'No data received from device'
+
+    elif response.request.method in ['GET', 'POST']:
+        reason = HTTP_RESPONSE_CODES[response.status_code]
+        error = ''
+        json_response = response.json()
+        # if response.json().get('data'):
+        #     json_response = response.json()['data']
+        # elif response.json().get('config'):
+        #     json_response = response.json()['config']
+        # elif response.json().get('templateDefinition'):
+        #     json_response = response.json()['templateDefinition']
+        # elif response.json().get('templateId'):
+        #     json_response = response.json()['templateId']
+        # else:
+        #     json_response = dict()
+        #     reason = HTTP_RESPONSE_CODES[response.status_code]
+        #     error = 'No data received from device'
     else:
         json_response = dict()
         reason = HTTP_RESPONSE_CODES[response.status_code]
@@ -509,3 +529,294 @@ class Viptela(object):
         else:
             url = '{0}/template/feature'.format(self.base_url)
         return self._get(self.session, url)
+
+    def set_template_aaa(self, data):
+        url = '{0}/template/feature'.format(self.base_url)
+        return self._post(self.session, url, data=data)
+
+    def set_template_banner(self, template_name, template_description, 
+                            device_models=None, login_banner='', motd_banner=''):
+        """
+        Set device banner template
+        :param template_name: Name of template
+        :param template_description: Template description
+        :param device_models: List of device types
+        :param login_banner: Login banner text
+        :param motd_banner: MOTD banner text
+        :return: Result named tuple
+        """
+        if not login_banner and not motd_banner:
+            raise AttributeError('login_banner and/or motd_banner are required.')
+
+        if isinstance(device_models, str):
+            device_models = [device_models]
+        elif not isinstance(device_models, list):
+            raise AttributeError('Device types should be a list') 
+
+        if any(i not in DEVICE_MODEL_MAP for i in device_models):
+            raise AttributeError('Invalid device type. Valid types are: {0}'.format(
+                ', '.join(DEVICE_MODEL_MAP.keys())
+            ))
+
+        template_definition = dict()
+        if login_banner:
+            template_definition.update({
+                'login': {
+                    'vipObjectType': 'object', 
+                    'vipType': 'constant', 
+                    'vipValue': login_banner, 
+                    'vipVariableName': 'banner_login'
+                    }
+                })
+        if motd_banner:
+            template_definition.update({
+                'motd': {
+                    'vipObjectType': 'object', 
+                    'vipType': 'constant', 
+                    'vipValue': motd_banner, 
+                    'vipVariableName': 'banner_motd'
+                    }
+                })
+
+        payload = {
+            'templateName': template_name,
+            'templateDescription': template_description,
+            'templateType': 'banner',
+            'templateMinVersion': '15.0.0',
+            'templateDefinition': template_definition,
+            'factoryDefault': False,
+            'deviceType': device_models, 
+            'deviceModels': [DEVICE_MODEL_MAP[i] for i in device_models],
+        }
+
+        url = '{0}/template/feature'.format(self.base_url)
+        return self._post(self.session, url, data=json.dumps(payload))
+
+    def set_template_logging(self, template_name, template_description, 
+                             device_types, device_models=None, ):
+        """
+        TODO: Add log exporter
+        Set device logging template
+        :param template_name: Name of template
+        :param template_description: Template description
+        :param device_models: List of device types
+        :return: Result named tuple
+        """
+        disk_logging = {
+            'disk': {
+                'enable': {
+                    'vipObjectType': 'object', 'vipType': 'ignore', 'vipValue': 'true'
+                }, 
+                'file': {
+                    'size': {'vipObjectType': 'object', 'vipType': 'ignore', 'vipValue': 10}, 
+                    'rotate': {'vipObjectType': 'object', 'vipType': 'ignore', 'vipValue': 10}
+                }, 
+                'priority': {
+                    'vipObjectType': 'object', 'vipType': 'ignore', 'vipValue': 'information'
+                }
+            }
+        }
+
+        template_definition = disk_logging
+
+        payload = {
+            'templateName': template_name,
+            'templateDescription': template_description,
+            'templateType':'logging',
+            'templateMinVersion':'15.0.0',
+            'templateDefinition': template_definition,
+            'factoryDefault': False,
+            'deviceType': device_models, 
+            'deviceModels': [DEVICE_MODEL_MAP[i] for i in device_models],
+        }
+
+        url = '{0}/template/feature'.format(self.base_url)
+        return self._post(self.session, url, data=json.dumps(payload))
+
+    def set_template_omp(self, template_name, template_description, 
+                         device_type, device_models=None):
+
+        valid_device_types = ['vedge', 'vsmart']
+        if device_type not in valid_device_types:
+            raise AttributeError('Invalid device type. Valid types are: {0}'.format(
+                ', '.join(valid_device_types)
+            ))
+
+        vedges = [
+            'vedge-cloud', 'vedge-100', 'vedge-100-B', 'vedge-100-M', 
+            'vedge-100-WM', 'vedge-1000', 'vedge-2000',
+        ]
+
+        template_definition = dict()
+
+        if device_type == 'vedge':
+            template_definition.update({
+                    'graceful-restart':{  
+                        'vipObjectType':'object',
+                        'vipType':'ignore',
+                        'vipValue':'true'
+                    },
+                    'send-path-limit':{  
+                        'vipObjectType':'object',
+                        'vipType':'ignore',
+                        'vipValue':4
+                    },
+                    'ecmp-limit':{  
+                        'vipObjectType':'object',
+                        'vipType':'ignore',
+                        'vipValue':4
+                    },
+                    'shutdown':{  
+                        'vipObjectType':'object',
+                        'vipType':'ignore',
+                        'vipValue':'false'
+                    },
+                    'timers':{  
+                        'advertisement-interval':{  
+                            'vipObjectType':'object',
+                            'vipType':'ignore',
+                            'vipValue':1
+                        },
+                        'graceful-restart-timer':{  
+                            'vipObjectType':'object',
+                            'vipType':'ignore',
+                            'vipValue':43200
+                        },
+                        'holdtime':{  
+                            'vipObjectType':'object',
+                            'vipType':'ignore',
+                            'vipValue':60
+                        },
+                        'eor-timer':{  
+                            'vipObjectType':'object',
+                            'vipType':'ignore',
+                            'vipValue':300
+                        }
+                    },
+                    'advertise':{  
+                        'vipType':'constant',
+                        'vipValue':[  
+                            {  
+                                'priority-order':[  
+                                    'protocol',
+                                    'route'
+                                ],
+                                'protocol':{  
+                                    'vipType':'constant',
+                                    'vipValue':'ospf',
+                                    'vipObjectType':'object'
+                                },
+                                'route':{  
+                                    'vipType':'constant',
+                                    'vipValue':'external',
+                                    'vipObjectType':'object'
+                                }
+                            },
+                            {  
+                                'priority-order':[  
+                                    'protocol'
+                                ],
+                                'protocol':{  
+                                    'vipType':'constant',
+                                    'vipValue':'connected',
+                                    'vipObjectType':'object'
+                                }
+                            },
+                            {  
+                                'priority-order':[  
+                                    'protocol'
+                                ],
+                                'protocol':{  
+                                    'vipType':'constant',
+                                    'vipValue':'static',
+                                    'vipObjectType':'object'
+                                }
+                            }
+                        ],
+                        'vipObjectType':'tree',
+                        'vipPrimaryKey':[  
+                            'protocol'
+                        ]
+                    }
+                })
+
+        elif device_type == 'vsmart':
+            template_definition.update({
+                    "graceful-restart":{  
+                        "vipObjectType":"object",
+                        "vipType":"ignore",
+                        "vipValue":"true"
+                    },
+                    "send-path-limit":{  
+                        "vipObjectType":"object",
+                        "vipType":"ignore",
+                        "vipValue":4
+                    },
+                    "send-backup-paths":{  
+                        "vipObjectType":"object",
+                        "vipType":"ignore",
+                        "vipValue":"false"
+                    },
+                    "discard-rejected":{  
+                        "vipObjectType":"object",
+                        "vipType":"ignore",
+                        "vipValue":"false"
+                    },
+                    "shutdown":{  
+                        "vipObjectType":"object",
+                        "vipType":"ignore",
+                        "vipValue":"false"
+                    },
+                    "timers":{  
+                        "advertisement-interval":{  
+                            "vipObjectType":"object",
+                            "vipType":"ignore",
+                            "vipValue":1
+                        },
+                        "graceful-restart-timer":{  
+                            "vipObjectType":"object",
+                            "vipType":"ignore",
+                            "vipValue":43200
+                        },
+                        "holdtime":{  
+                            "vipObjectType":"object",
+                            "vipType":"ignore",
+                            "vipValue":60
+                        },
+                        "eor-timer":{  
+                            "vipObjectType":"object",
+                            "vipType":"ignore",
+                            "vipValue":300
+                        }
+                    }
+                })
+
+        if device_type == 'vedge':
+            models = [DEVICE_MODEL_MAP[i] for i in vedges]
+        else:
+            models = DEVICE_MODEL_MAP['vsmart']
+
+        payload = {  
+            'templateName': template_name,
+            'templateDescription': template_description,
+            'templateType': 'omp-{0}'.format(device_type),
+            'templateMinVersion': '15.0.0',
+            "templateDefinition": template_definition,
+            "deviceType":[i if device_type == 'vedge' else 'vsmart' for i in vedges],
+            "deviceModels": models,
+            "factoryDefault": False
+        }
+
+        url = '{0}/template/feature'.format(self.base_url)
+        return self._post(self.session, url, data=json.dumps(payload))
+
+
+
+    def set_policy_vsmart(self, policy_name, policy_description, policy_configuration):
+        payload = {  
+            'policyName': policy_name,
+            'policyDescription':  policy_description,
+            'policyDefinition': policy_configuration,
+        }
+        url = '{0}/template/policy/vsmart'.format(self.base_url)
+        return self._post(self.session, url, data=json.dumps(payload))
