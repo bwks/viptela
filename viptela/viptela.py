@@ -602,17 +602,29 @@ class Viptela(object):
         :param device_models: List of device types
         :return: Result named tuple
         """
-        disk_logging = {
-            'disk': {
-                'enable': {
-                    'vipObjectType': 'object', 'vipType': 'ignore', 'vipValue': 'true'
-                }, 
-                'file': {
-                    'size': {'vipObjectType': 'object', 'vipType': 'ignore', 'vipValue': 10}, 
-                    'rotate': {'vipObjectType': 'object', 'vipType': 'ignore', 'vipValue': 10}
-                }, 
-                'priority': {
-                    'vipObjectType': 'object', 'vipType': 'ignore', 'vipValue': 'information'
+        disk_logging = {  
+            'disk': {  
+                'enable': {  
+                    'vipObjectType': 'object',
+                    'vipType': 'ignore',
+                    'vipValue': 'true'
+                },
+                'file': {  
+                    'size': {  
+                        'vipObjectType': 'object',
+                        'vipType': 'ignore',
+                        'vipValue': 10
+                    },
+                    'rotate': {  
+                        'vipObjectType': 'object',
+                        'vipType': 'ignore',
+                        'vipValue': 10
+                    }
+                },
+                'priority': {  
+                    'vipObjectType': 'object',
+                    'vipType': 'ignore',
+                    'vipValue': 'information'
                 }
             }
         }
@@ -651,90 +663,90 @@ class Viptela(object):
 
         if device_type == 'vedge':
             template_definition.update({
-                    'graceful-restart':{  
-                        'vipObjectType':'object',
-                        'vipType':'ignore',
-                        'vipValue':'true'
+                    'graceful-restart': {  
+                        'vipObjectType': 'object',
+                        'vipType': 'ignore',
+                        'vipValue': 'true'
                     },
-                    'send-path-limit':{  
-                        'vipObjectType':'object',
-                        'vipType':'ignore',
-                        'vipValue':4
+                    'send-path-limit': {  
+                        'vipObjectType': 'object',
+                        'vipType': 'ignore',
+                        'vipValue': 4
                     },
-                    'ecmp-limit':{  
-                        'vipObjectType':'object',
-                        'vipType':'ignore',
-                        'vipValue':4
+                    'ecmp-limit': {  
+                        'vipObjectType': 'object',
+                        'vipType': 'ignore',
+                        'vipValue': 4
                     },
-                    'shutdown':{  
-                        'vipObjectType':'object',
-                        'vipType':'ignore',
-                        'vipValue':'false'
+                    'shutdown': {  
+                        'vipObjectType': 'object',
+                        'vipType': 'ignore',
+                        'vipValue': 'false'
                     },
-                    'timers':{  
-                        'advertisement-interval':{  
-                            'vipObjectType':'object',
-                            'vipType':'ignore',
-                            'vipValue':1
+                    'timers': {  
+                        'advertisement-interval': {  
+                            'vipObjectType': 'object',
+                            'vipType': 'ignore',
+                            'vipValue': 1
                         },
-                        'graceful-restart-timer':{  
-                            'vipObjectType':'object',
-                            'vipType':'ignore',
-                            'vipValue':43200
+                        'graceful-restart-timer': {  
+                            'vipObjectType': 'object',
+                            'vipType': 'ignore',
+                            'vipValue': 43200
                         },
-                        'holdtime':{  
-                            'vipObjectType':'object',
-                            'vipType':'ignore',
-                            'vipValue':60
+                        'holdtime': {  
+                            'vipObjectType': 'object',
+                            'vipType': 'ignore',
+                            'vipValue': 60
                         },
-                        'eor-timer':{  
-                            'vipObjectType':'object',
-                            'vipType':'ignore',
-                            'vipValue':300
+                        'eor-timer': {  
+                            'vipObjectType': 'object',
+                            'vipType': 'ignore',
+                            'vipValue': 300
                         }
                     },
-                    'advertise':{  
+                    'advertise': {  
                         'vipType':'constant',
-                        'vipValue':[  
+                        'vipValue': [  
                             {  
-                                'priority-order':[  
+                                'priority-order': [  
                                     'protocol',
                                     'route'
                                 ],
-                                'protocol':{  
-                                    'vipType':'constant',
-                                    'vipValue':'ospf',
-                                    'vipObjectType':'object'
+                                'protocol': {  
+                                    'vipType': 'constant',
+                                    'vipValue': 'ospf',
+                                    'vipObjectType': 'object'
                                 },
-                                'route':{  
-                                    'vipType':'constant',
-                                    'vipValue':'external',
-                                    'vipObjectType':'object'
+                                'route': {  
+                                    'vipType': 'constant',
+                                    'vipValue': 'external',
+                                    'vipObjectType': 'object'
                                 }
                             },
                             {  
-                                'priority-order':[  
+                                'priority-order': [  
                                     'protocol'
                                 ],
-                                'protocol':{  
-                                    'vipType':'constant',
-                                    'vipValue':'connected',
-                                    'vipObjectType':'object'
+                                'protocol': {  
+                                    'vipType': 'constant',
+                                    'vipValue': 'connected',
+                                    'vipObjectType': 'object'
                                 }
                             },
                             {  
-                                'priority-order':[  
+                                'priority-order':  [  
                                     'protocol'
                                 ],
-                                'protocol':{  
-                                    'vipType':'constant',
-                                    'vipValue':'static',
-                                    'vipObjectType':'object'
+                                'protocol': {  
+                                    'vipType': 'constant',
+                                    'vipValue': 'static',
+                                    'vipObjectType': 'object'
                                 }
                             }
                         ],
-                        'vipObjectType':'tree',
-                        'vipPrimaryKey':[  
+                        'vipObjectType': 'tree',
+                        'vipPrimaryKey': [  
                             'protocol'
                         ]
                     }
@@ -742,51 +754,51 @@ class Viptela(object):
 
         elif device_type == 'vsmart':
             template_definition.update({
-                    "graceful-restart":{  
-                        "vipObjectType":"object",
-                        "vipType":"ignore",
-                        "vipValue":"true"
+                    'graceful-restart': {  
+                        'vipObjectType': 'object',
+                        'vipType': 'ignore',
+                        'vipValue': 'true'
                     },
-                    "send-path-limit":{  
-                        "vipObjectType":"object",
-                        "vipType":"ignore",
-                        "vipValue":4
+                    'send-path-limit': {  
+                        'vipObjectType': 'object',
+                        'vipType': 'ignore',
+                        'vipValue': 4
                     },
-                    "send-backup-paths":{  
-                        "vipObjectType":"object",
-                        "vipType":"ignore",
-                        "vipValue":"false"
+                    'send-backup-paths': {  
+                        'vipObjectType': 'object',
+                        'vipType': 'ignore',
+                        'vipValue': 'false'
                     },
-                    "discard-rejected":{  
-                        "vipObjectType":"object",
-                        "vipType":"ignore",
-                        "vipValue":"false"
+                    'discard-rejected': {  
+                        'vipObjectType': 'object',
+                        'vipType': 'ignore',
+                        'vipValue': 'false'
                     },
-                    "shutdown":{  
-                        "vipObjectType":"object",
-                        "vipType":"ignore",
-                        "vipValue":"false"
+                    'shutdown': {  
+                        'vipObjectType': 'object',
+                        'vipType': 'ignore',
+                        'vipValue': 'false'
                     },
-                    "timers":{  
-                        "advertisement-interval":{  
-                            "vipObjectType":"object",
-                            "vipType":"ignore",
-                            "vipValue":1
+                    'timers': {  
+                        'advertisement-interval': {  
+                            'vipObjectType': 'object',
+                            'vipType': 'ignore',
+                            'vipValue': 1
                         },
-                        "graceful-restart-timer":{  
-                            "vipObjectType":"object",
-                            "vipType":"ignore",
-                            "vipValue":43200
+                        'graceful-restart-timer': {  
+                            'vipObjectType': 'object',
+                            'vipType': 'ignore',
+                            'vipValue': 43200
                         },
-                        "holdtime":{  
-                            "vipObjectType":"object",
-                            "vipType":"ignore",
-                            "vipValue":60
+                        'holdtime': {  
+                            'vipObjectType': 'object',
+                            'vipType': 'ignore',
+                            'vipValue': 60
                         },
-                        "eor-timer":{  
-                            "vipObjectType":"object",
-                            "vipType":"ignore",
-                            "vipValue":300
+                        'eor-timer': {  
+                            'vipObjectType': 'object',
+                            'vipType': 'ignore',
+                            'vipValue': 300
                         }
                     }
                 })
@@ -801,16 +813,14 @@ class Viptela(object):
             'templateDescription': template_description,
             'templateType': 'omp-{0}'.format(device_type),
             'templateMinVersion': '15.0.0',
-            "templateDefinition": template_definition,
-            "deviceType":[i if device_type == 'vedge' else 'vsmart' for i in vedges],
-            "deviceModels": models,
-            "factoryDefault": False
+            'templateDefinition': template_definition,
+            'deviceType': [i if device_type == 'vedge' else 'vsmart' for i in vedges],
+            'deviceModels': models,
+            'factoryDefault': False
         }
 
         url = '{0}/template/feature'.format(self.base_url)
         return self._post(self.session, url, data=json.dumps(payload))
-
-
 
     def set_policy_vsmart(self, policy_name, policy_description, policy_configuration):
         payload = {  
