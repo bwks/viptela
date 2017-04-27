@@ -830,3 +830,77 @@ class Viptela(object):
         }
         url = '{0}/template/policy/vsmart'.format(self.base_url)
         return self._post(self.session, url, data=json.dumps(payload))
+
+    def set_template_ntp(self, template_name, template_description, ntp_servers=None):
+
+        def ntp_server_list(ntp_servers):
+            for server in ntp_servers:
+                yield({  
+                    'name': {  
+                        'vipObjectType': 'object',
+                        'vipType': 'constant',
+                        'vipValue': server['ipv4_address']
+                    },
+                    'key':{  
+                        'vipObjectType': 'object',
+                        'vipType': 'ignore'
+                    },
+                    'vpn': {  
+                        'vipObjectType': 'object',
+                        'vipType': 'ignore',
+                        'vipValue': server['vpn']
+                    },
+                    'version': {  
+                        'vipObjectType': 'object',
+                        'vipType': 'ignore',
+                        'vipValue': server['version']
+                    },
+                    'source-interface': {  
+                        'vipObjectType': 'object',
+                        'vipType': 'ignore'
+                    },
+                    'prefer': {  
+                        'vipObjectType': 'object',
+                        'vipType': 'constant',
+                        'vipValue': server['prefer'],
+                        'vipVariableName': ''
+                    },
+                    'priority-order': [  
+                        'name',
+                        'key',
+                        'vpn',
+                        'version',
+                        'source-interface',
+                        'prefer'
+                    ]
+                })
+
+
+        payload = {  
+            'templateName': template_name,
+            'templateDescription': template_description,
+            'templateType': 'ntp',
+            'templateMinVersion': '15.0.0',
+            'templateDefinition': {  
+                'keys': {  
+                    'trusted': {  
+                        'vipObjectType': 'list',
+                        'vipType': 'ignore'
+                    }
+                },
+                'server': {  
+                    'vipType': 'constant',
+                    'vipValue': [i for i in ntp_server_list(ntp_servers)],
+                    'vipObjectType': 'tree',
+                    'vipPrimaryKey': [  
+                        'name'
+                    ]
+                }
+            },
+            'deviceType': [i for i in DEVICE_MODEL_MAP], 
+            'deviceModels': [DEVICE_MODEL_MAP[i] for i in DEVICE_MODEL_MAP],
+            'factoryDefault': False
+        }
+
+        url = '{0}/template/feature'.format(self.base_url)
+        return self._post(self.session, url, data=json.dumps(payload))
