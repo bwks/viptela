@@ -90,3 +90,5 @@ ENV/
 
 # pycharm
 .idea
+.vscode
+.DS_Store
