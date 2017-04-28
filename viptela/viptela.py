@@ -34,6 +34,9 @@ DEVICE_MODEL_MAP = {
     'vsmart': {'name':'vsmart','displayName':'vSmart','deviceType':'vsmart'},            
 }
 
+ALL_DEVICE_TYPES = [i for i in DEVICE_MODEL_MAP]
+ALL_DEVICE_MODELS = [DEVICE_MODEL_MAP[i] for i in DEVICE_MODEL_MAP]
+
 # parse_response will return a namedtuple object
 Result = namedtuple('Result', [
     'ok', 'status_code', 'error', 'reason', 'data', 'response'
@@ -875,7 +878,6 @@ class Viptela(object):
                     ]
                 })
 
-
         payload = {  
             'templateName': template_name,
             'templateDescription': template_description,
@@ -899,6 +901,90 @@ class Viptela(object):
             },
             'deviceType': [i for i in DEVICE_MODEL_MAP], 
             'deviceModels': [DEVICE_MODEL_MAP[i] for i in DEVICE_MODEL_MAP],
+            'factoryDefault': False
+        }
+
+        url = '{0}/template/feature'.format(self.base_url)
+        return self._post(self.session, url, data=json.dumps(payload))
+
+    def set_template_snmpv2(self, template_name, template_description, 
+                            snmp_contact, v2_community, shutdown='false'):
+        payload = {  
+            'templateName': template_name,
+            'templateDescription': template_description,
+            'templateType': 'snmp',
+            'templateMinVersion': '15.0.0',
+            'templateDefinition': {  
+                'shutdown': {  
+                    'vipObjectType': 'object',
+                    'vipType': 'constant',
+                    'vipValue': shutdown,
+                    'vipVariableName': ''
+                },
+                'contact': {  
+                    'vipObjectType': 'object',
+                    'vipType': 'constant',
+                    'vipValue': snmp_contact,
+                    'vipVariableName': ''
+                },
+                'name': {  
+                    'vipObjectType': 'object',
+                    'vipType': 'variable',
+                    'vipValue': '',
+                    'vipVariableName': ''
+                },
+                'location': {  
+                    'vipObjectType': 'object',
+                    'vipType': 'variable',
+                    'vipValue': '',
+                    'vipVariableName': ''
+                },
+                'view': {  
+                    'vipType': 'constant',
+                    'vipValue': [  
+                        {  
+                            'name': {  
+                                'vipObjectType': 'object',
+                                'vipType': 'constant',
+                                'vipValue': v2_community,
+                                'vipVariableName': ''
+                            },
+                            'viewMode': 'add',
+                            'priority-order': [  
+                                'name'
+                            ]
+                        }
+                    ],
+                    'vipObjectType': 'tree',
+                    'vipPrimaryKey': [  
+                        'name'
+                    ]
+                },
+                'trap': {  
+                    'group': {  
+                        'vipType': 'ignore',
+                        'vipValue': [  
+                        ],
+                        'vipObjectType': 'tree',
+                        'vipPrimaryKey': [  
+                            'group-name'
+                        ]
+                    },
+                    'target': {  
+                        'vipType': 'ignore',
+                        'vipValue': [  
+                        ],
+                        'vipObjectType': 'tree',
+                        'vipPrimaryKey': [  
+                            'vpn-id',
+                            'ip',
+                            'port'
+                        ]
+                    }
+                }
+            },
+            'deviceType': ALL_DEVICE_TYPES, 
+            'deviceModels': ALL_DEVICE_MODELS,
             'factoryDefault': False
         }
 
