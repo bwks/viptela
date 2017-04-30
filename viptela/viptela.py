@@ -126,6 +126,25 @@ def parse_response(response):
         return parse_http_error(response)
 
 
+def vip_object(vip_object_type='object', vip_type='ignore', vip_value=None, 
+    vip_variable_name=None, vip_primary_key=None):
+
+    vip = {
+        'vipObjectType': vip_object_type,
+        'vipType': vip_type,
+    }
+
+    if vip_value is not None:
+        vip.update({'vipValue': vip_value})
+
+    if vip_variable_name is not None:
+        vip.update({'vipVariableName': vip_variable_name})
+
+    if vip_primary_key is not None:
+        vip.update({'vipPrimaryKey': vip_primary_key})
+
+    return vip
+
 class Viptela(object):
     """
     Class for use with Viptela vManage API.
@@ -666,47 +685,15 @@ class Viptela(object):
 
         if device_type == 'vedge':
             template_definition.update({
-                    'graceful-restart': {  
-                        'vipObjectType': 'object',
-                        'vipType': 'ignore',
-                        'vipValue': 'true'
-                    },
-                    'send-path-limit': {  
-                        'vipObjectType': 'object',
-                        'vipType': 'ignore',
-                        'vipValue': 4
-                    },
-                    'ecmp-limit': {  
-                        'vipObjectType': 'object',
-                        'vipType': 'ignore',
-                        'vipValue': 4
-                    },
-                    'shutdown': {  
-                        'vipObjectType': 'object',
-                        'vipType': 'ignore',
-                        'vipValue': 'false'
-                    },
+                    'graceful-restart': vip_object(vip_value='true'),
+                    'send-path-limit': vip_object(vip_value=4),
+                    'ecmp-limit': vip_object(vip_value=4),
+                    'shutdown': vip_object(vip_value='false'),
                     'timers': {  
-                        'advertisement-interval': {  
-                            'vipObjectType': 'object',
-                            'vipType': 'ignore',
-                            'vipValue': 1
-                        },
-                        'graceful-restart-timer': {  
-                            'vipObjectType': 'object',
-                            'vipType': 'ignore',
-                            'vipValue': 43200
-                        },
-                        'holdtime': {  
-                            'vipObjectType': 'object',
-                            'vipType': 'ignore',
-                            'vipValue': 60
-                        },
-                        'eor-timer': {  
-                            'vipObjectType': 'object',
-                            'vipType': 'ignore',
-                            'vipValue': 300
-                        }
+                        'advertisement-interval': vip_object(vip_value=1),
+                        'graceful-restart-timer': vip_object(vip_value=43200),
+                        'holdtime': vip_object(vip_value=60),
+                        'eor-timer': vip_object(vip_value=300),
                     },
                     'advertise': {  
                         'vipType':'constant',
@@ -757,52 +744,16 @@ class Viptela(object):
 
         elif device_type == 'vsmart':
             template_definition.update({
-                    'graceful-restart': {  
-                        'vipObjectType': 'object',
-                        'vipType': 'ignore',
-                        'vipValue': 'true'
-                    },
-                    'send-path-limit': {  
-                        'vipObjectType': 'object',
-                        'vipType': 'ignore',
-                        'vipValue': 4
-                    },
-                    'send-backup-paths': {  
-                        'vipObjectType': 'object',
-                        'vipType': 'ignore',
-                        'vipValue': 'false'
-                    },
-                    'discard-rejected': {  
-                        'vipObjectType': 'object',
-                        'vipType': 'ignore',
-                        'vipValue': 'false'
-                    },
-                    'shutdown': {  
-                        'vipObjectType': 'object',
-                        'vipType': 'ignore',
-                        'vipValue': 'false'
-                    },
+                    'graceful-restart': vip_object(vip_value='true'),
+                    'send-path-limit': vip_object(vip_value=4),
+                    'send-backup-paths': vip_object(vip_value='false'),
+                    'discard-rejected': vip_object(vip_value='false'),
+                    'shutdown': vip_object(vip_value='false'),
                     'timers': {  
-                        'advertisement-interval': {  
-                            'vipObjectType': 'object',
-                            'vipType': 'ignore',
-                            'vipValue': 1
-                        },
-                        'graceful-restart-timer': {  
-                            'vipObjectType': 'object',
-                            'vipType': 'ignore',
-                            'vipValue': 43200
-                        },
-                        'holdtime': {  
-                            'vipObjectType': 'object',
-                            'vipType': 'ignore',
-                            'vipValue': 60
-                        },
-                        'eor-timer': {  
-                            'vipObjectType': 'object',
-                            'vipType': 'ignore',
-                            'vipValue': 300
-                        }
+                        'advertisement-interval': vip_object(vip_value=1),
+                        'graceful-restart-timer': vip_object(vip_value=43200),
+                        'holdtime': vip_object(vip_value=60),
+                        'eor-timer': vip_object(vip_value=300),
                     }
                 })
 
@@ -817,7 +768,7 @@ class Viptela(object):
             'templateType': 'omp-{0}'.format(device_type),
             'templateMinVersion': '15.0.0',
             'templateDefinition': template_definition,
-            'deviceType': [i if device_type == 'vedge' else 'vsmart' for i in vedges],
+            'deviceType': ['vsmart'] if device_type == 'vsmart' else [i for i in vedges],
             'deviceModels': models,
             'factoryDefault': False
         }
@@ -839,35 +790,12 @@ class Viptela(object):
         def ntp_server_list(ntp_servers):
             for server in ntp_servers:
                 yield({  
-                    'name': {  
-                        'vipObjectType': 'object',
-                        'vipType': 'constant',
-                        'vipValue': server['ipv4_address']
-                    },
-                    'key':{  
-                        'vipObjectType': 'object',
-                        'vipType': 'ignore'
-                    },
-                    'vpn': {  
-                        'vipObjectType': 'object',
-                        'vipType': 'ignore',
-                        'vipValue': server['vpn']
-                    },
-                    'version': {  
-                        'vipObjectType': 'object',
-                        'vipType': 'ignore',
-                        'vipValue': server['version']
-                    },
-                    'source-interface': {  
-                        'vipObjectType': 'object',
-                        'vipType': 'ignore'
-                    },
-                    'prefer': {  
-                        'vipObjectType': 'object',
-                        'vipType': 'constant',
-                        'vipValue': server['prefer'],
-                        'vipVariableName': ''
-                    },
+                    'name': vip_object(vip_type='constant', vip_value=server['ipv4_address']),
+                    'key': vip_object(vip_type='ignore'),
+                    'vpn': vip_object(vip_type='ignore', vip_value=server['vpn']),
+                    'version': vip_object(vip_type='ignore', vip_value=server['version']),
+                    'source-interface': vip_object(vip_type='ignore'),
+                    'prefer': vip_object(vip_type='constant', vip_value=server['prefer']),
                     'priority-order': [  
                         'name',
                         'key',
@@ -890,14 +818,12 @@ class Viptela(object):
                         'vipType': 'ignore'
                     }
                 },
-                'server': {  
-                    'vipType': 'constant',
-                    'vipValue': [i for i in ntp_server_list(ntp_servers)],
-                    'vipObjectType': 'tree',
-                    'vipPrimaryKey': [  
-                        'name'
-                    ]
-                }
+                'server': vip_object(
+                            vip_type='constant', 
+                            vip_value=[i for i in ntp_server_list(ntp_servers)],
+                            vip_object_type='tree',
+                            vip_primary_key=['name']
+                            ),
             },
             'deviceType': [i for i in DEVICE_MODEL_MAP], 
             'deviceModels': [DEVICE_MODEL_MAP[i] for i in DEVICE_MODEL_MAP],
@@ -915,30 +841,10 @@ class Viptela(object):
             'templateType': 'snmp',
             'templateMinVersion': '15.0.0',
             'templateDefinition': {  
-                'shutdown': {  
-                    'vipObjectType': 'object',
-                    'vipType': 'constant',
-                    'vipValue': shutdown,
-                    'vipVariableName': ''
-                },
-                'contact': {  
-                    'vipObjectType': 'object',
-                    'vipType': 'constant',
-                    'vipValue': snmp_contact,
-                    'vipVariableName': ''
-                },
-                'name': {  
-                    'vipObjectType': 'object',
-                    'vipType': 'variable',
-                    'vipValue': '',
-                    'vipVariableName': ''
-                },
-                'location': {  
-                    'vipObjectType': 'object',
-                    'vipType': 'variable',
-                    'vipValue': '',
-                    'vipVariableName': ''
-                },
+                'shutdown': vip_object(vip_type='constant', vip_value=shutdown),
+                'contact': vip_object(vip_type='constant', vip_value=snmp_contact),
+                'name': vip_object(vip_type='variable'),
+                'location': vip_object(vip_type='variable'),
                 'view': {  
                     'vipType': 'constant',
                     'vipValue': [  
