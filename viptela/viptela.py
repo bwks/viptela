@@ -583,21 +583,11 @@ class Viptela(object):
         template_definition = dict()
         if login_banner:
             template_definition.update({
-                'login': {
-                    'vipObjectType': 'object', 
-                    'vipType': 'constant', 
-                    'vipValue': login_banner, 
-                    'vipVariableName': 'banner_login'
-                    }
+                'login': vip_object(vip_type='constant', vip_value=login_banner, vip_variable_name='banner_login')
                 })
         if motd_banner:
             template_definition.update({
-                'motd': {
-                    'vipObjectType': 'object', 
-                    'vipType': 'constant', 
-                    'vipValue': motd_banner, 
-                    'vipVariableName': 'banner_motd'
-                    }
+                'motd': vip_object(vip_type='constant', vip_value=motd_banner, vip_variable_name='banner_motd')
                 })
 
         payload = {
@@ -615,7 +605,7 @@ class Viptela(object):
         return self._post(self.session, url, data=json.dumps(payload))
 
     def set_template_logging(self, template_name, template_description, 
-                             device_types, device_models=None, ):
+                             device_models=None):
         """
         TODO: Add log exporter
         Set device logging template
@@ -626,28 +616,12 @@ class Viptela(object):
         """
         disk_logging = {  
             'disk': {  
-                'enable': {  
-                    'vipObjectType': 'object',
-                    'vipType': 'ignore',
-                    'vipValue': 'true'
-                },
+                'enable': vip_object(vip_value='true'),
                 'file': {  
-                    'size': {  
-                        'vipObjectType': 'object',
-                        'vipType': 'ignore',
-                        'vipValue': 10
-                    },
-                    'rotate': {  
-                        'vipObjectType': 'object',
-                        'vipType': 'ignore',
-                        'vipValue': 10
-                    }
+                    'size': vip_object(vip_value=10),
+                    'rotate': vip_object(vip_value=10),
                 },
-                'priority': {  
-                    'vipObjectType': 'object',
-                    'vipType': 'ignore',
-                    'vipValue': 'information'
-                }
+                'priority': vip_object(vip_value='information'),
             }
         }
 
@@ -703,36 +677,20 @@ class Viptela(object):
                                     'protocol',
                                     'route'
                                 ],
-                                'protocol': {  
-                                    'vipType': 'constant',
-                                    'vipValue': 'ospf',
-                                    'vipObjectType': 'object'
-                                },
-                                'route': {  
-                                    'vipType': 'constant',
-                                    'vipValue': 'external',
-                                    'vipObjectType': 'object'
-                                }
+                                'protocol': vip_object(vip_type='constant', vip_value='ospf'),
+                                'route': vip_object(vip_type='constant', vip_value='external'),
                             },
                             {  
                                 'priority-order': [  
                                     'protocol'
                                 ],
-                                'protocol': {  
-                                    'vipType': 'constant',
-                                    'vipValue': 'connected',
-                                    'vipObjectType': 'object'
-                                }
+                                'protocol': vip_object(vip_type='constant', vip_value='connected'),
                             },
                             {  
                                 'priority-order':  [  
                                     'protocol'
                                 ],
-                                'protocol': {  
-                                    'vipType': 'constant',
-                                    'vipValue': 'static',
-                                    'vipObjectType': 'object'
-                                }
+                                'protocol': vip_object(vip_type='constant', vip_value='static'),
                             }
                         ],
                         'vipObjectType': 'tree',
@@ -849,12 +807,7 @@ class Viptela(object):
                     'vipType': 'constant',
                     'vipValue': [  
                         {  
-                            'name': {  
-                                'vipObjectType': 'object',
-                                'vipType': 'constant',
-                                'vipValue': v2_community,
-                                'vipVariableName': ''
-                            },
+                            'name': vip_object(vip_type='constant', vip_value=v2_community),
                             'viewMode': 'add',
                             'priority-order': [  
                                 'name'
