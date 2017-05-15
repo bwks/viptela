@@ -1,3 +1,6 @@
+"""
+Main module for interacting with viptela vManage applicance.
+"""
 import json
 import requests
 
@@ -23,15 +26,15 @@ HTTP_RESPONSE_CODES.update(HTTP_SUCCESS_CODES)
 HTTP_RESPONSE_CODES.update(HTTP_ERROR_CODES)
 
 DEVICE_MODEL_MAP = {
-    'vedge-cloud': {'name': 'vedge-cloud','displayName':'vEdge Cloud','deviceType': 'vedge'},
+    'vedge-cloud': {'name': 'vedge-cloud', 'displayName':'vEdge Cloud', 'deviceType': 'vedge'},
     'vedge-100': {'name': 'vedge-100', 'displayName': 'vEdge 100', 'deviceType': 'vedge'},
-    'vedge-100-B': {'name':'vedge-100-B','displayName':'vEdge 100 B','deviceType':'vedge'},
-    'vedge-100-M': {'name':'vedge-100-M','displayName':'vEdge 100 M','deviceType':'vedge'},
-    'vedge-100-WM': {'name':'vedge-100-WM','displayName':'vEdge 100 WM','deviceType':'vedge'},
-    'vedge-1000': {'name':'vedge-1000','displayName':'vEdge 1000','deviceType':'vedge'},            
-    'vedge-2000': {'name':'vedge-2000','displayName':'vEdge 2000','deviceType':'vedge'},
-    'vmanage': {'name':'vmanage','displayName':'vManage','deviceType':'vmanage'},
-    'vsmart': {'name':'vsmart','displayName':'vSmart','deviceType':'vsmart'},            
+    'vedge-100-B': {'name': 'vedge-100-B', 'displayName': 'vEdge 100 B', 'deviceType': 'vedge'},
+    'vedge-100-M': {'name': 'vedge-100-M', 'displayName': 'vEdge 100 M', 'deviceType': 'vedge'},
+    'vedge-100-WM': {'name': 'vedge-100-WM', 'displayName': 'vEdge 100 WM', 'deviceType': 'vedge'},
+    'vedge-1000': {'name': 'vedge-1000', 'displayName': 'vEdge 1000', 'deviceType': 'vedge'},
+    'vedge-2000': {'name': 'vedge-2000', 'displayName': 'vEdge 2000', 'deviceType': 'vedge'},
+    'vmanage': {'name': 'vmanage', 'displayName': 'vManage', 'deviceType': 'vmanage'},
+    'vsmart': {'name': 'vsmart', 'displayName': 'vSmart', 'deviceType': 'vsmart'},
 }
 
 ALL_DEVICE_TYPES = [i for i in DEVICE_MODEL_MAP]
@@ -97,10 +100,10 @@ def parse_http_error(response):
         json_response = dict()
         reason = response.json()['error']['details']
         error = response.json()['error']['message']
-    except ValueError as e:
+    except ValueError as err:
         json_response = dict()
         reason = HTTP_RESPONSE_CODES[response.status_code]
-        error = e
+        error = err
 
     result = Result(
         ok=response.ok,
@@ -126,9 +129,24 @@ def parse_response(response):
         return parse_http_error(response)
 
 
-def vip_object(vip_object_type='object', vip_type='ignore', vip_value=None, 
-    vip_variable_name=None, vip_primary_key=None):
+def find_feature_template(session, template_name):
+    """
+    Find a feature template ID by template name.
+    """
+    all_templates = session.get_template_feature()
 
+    for i in all_templates.data['data']:
+        if i['templateName'] == template_name:
+            return i['templateId']
+    raise ValueError('Template not found')
+
+
+def vip_object(vip_object_type='object', vip_type='ignore', vip_value=None,
+               vip_variable_name=None, vip_primary_key=None):
+    """
+    VIP objects are used as configuration elements
+    Build a vip object
+    """
     vip = {
         'vipObjectType': vip_object_type,
         'vipType': vip_type,
@@ -222,7 +240,7 @@ class Viptela(object):
         if data is None:
             data = dict()
 
-        pass
+        return parse_response(session.delete(url=url, headers=headers, data=data, timeout=timeout))
 
     def __init__(self, user, user_pass, vmanage_server, vmanage_server_port=8443,
                  verify=False, disable_warnings=False, timeout=10, auto_login=True):
@@ -553,10 +571,13 @@ class Viptela(object):
         return self._get(self.session, url)
 
     def set_template_aaa(self, data):
+        """
+        Set AAA template
+        """
         url = '{0}/template/feature'.format(self.base_url)
         return self._post(self.session, url, data=data)
 
-    def set_template_banner(self, template_name, template_description, 
+    def set_template_banner(self, template_name, template_description,
                             device_models=None, login_banner='', motd_banner=''):
         """
         Set device banner template
@@ -573,7 +594,7 @@ class Viptela(object):
         if isinstance(device_models, str):
             device_models = [device_models]
         elif not isinstance(device_models, list):
-            raise AttributeError('Device types should be a list') 
+            raise AttributeError('Device types should be a list')
 
         if any(i not in DEVICE_MODEL_MAP for i in device_models):
             raise AttributeError('Invalid device type. Valid types are: {0}'.format(
@@ -583,11 +604,17 @@ class Viptela(object):
         template_definition = dict()
         if login_banner:
             template_definition.update({
-                'login': vip_object(vip_type='constant', vip_value=login_banner, vip_variable_name='banner_login')
+                'login': vip_object(
+                    vip_type='constant',
+                    vip_value=login_banner,
+                    vip_variable_name='banner_login')
                 })
         if motd_banner:
             template_definition.update({
-                'motd': vip_object(vip_type='constant', vip_value=motd_banner, vip_variable_name='banner_motd')
+                'motd': vip_object(
+                    vip_type='constant',
+                    vip_value=motd_banner,
+                    vip_variable_name='banner_motd')
                 })
 
         payload = {
@@ -597,15 +624,14 @@ class Viptela(object):
             'templateMinVersion': '15.0.0',
             'templateDefinition': template_definition,
             'factoryDefault': False,
-            'deviceType': device_models, 
+            'deviceType': device_models,
             'deviceModels': [DEVICE_MODEL_MAP[i] for i in device_models],
         }
 
         url = '{0}/template/feature'.format(self.base_url)
         return self._post(self.session, url, data=json.dumps(payload))
 
-    def set_template_logging(self, template_name, template_description, 
-                             device_models=None):
+    def set_template_logging(self, template_name, template_description, device_models=None):
         """
         TODO: Add log exporter
         Set device logging template
@@ -614,10 +640,10 @@ class Viptela(object):
         :param device_models: List of device types
         :return: Result named tuple
         """
-        disk_logging = {  
-            'disk': {  
+        disk_logging = {
+            'disk': {
                 'enable': vip_object(vip_value='true'),
-                'file': {  
+                'file': {
                     'size': vip_object(vip_value=10),
                     'rotate': vip_object(vip_value=10),
                 },
@@ -634,16 +660,18 @@ class Viptela(object):
             'templateMinVersion':'15.0.0',
             'templateDefinition': template_definition,
             'factoryDefault': False,
-            'deviceType': device_models, 
+            'deviceType': device_models,
             'deviceModels': [DEVICE_MODEL_MAP[i] for i in device_models],
         }
 
         url = '{0}/template/feature'.format(self.base_url)
         return self._post(self.session, url, data=json.dumps(payload))
 
-    def set_template_omp(self, template_name, template_description, 
+    def set_template_omp(self, template_name, template_description,
                          device_type, device_models=None):
-
+        """
+        Set OMP template.
+        """
         valid_device_types = ['vedge', 'vsmart']
         if device_type not in valid_device_types:
             raise AttributeError('Invalid device type. Valid types are: {0}'.format(
@@ -651,7 +679,7 @@ class Viptela(object):
             ))
 
         vedges = [
-            'vedge-cloud', 'vedge-100', 'vedge-100-B', 'vedge-100-M', 
+            'vedge-cloud', 'vedge-100', 'vedge-100-B', 'vedge-100-M',
             'vedge-100-WM', 'vedge-1000', 'vedge-2000',
         ]
 
@@ -659,59 +687,59 @@ class Viptela(object):
 
         if device_type == 'vedge':
             template_definition.update({
-                    'graceful-restart': vip_object(vip_value='true'),
-                    'send-path-limit': vip_object(vip_value=4),
-                    'ecmp-limit': vip_object(vip_value=4),
-                    'shutdown': vip_object(vip_value='false'),
-                    'timers': {  
-                        'advertisement-interval': vip_object(vip_value=1),
-                        'graceful-restart-timer': vip_object(vip_value=43200),
-                        'holdtime': vip_object(vip_value=60),
-                        'eor-timer': vip_object(vip_value=300),
-                    },
-                    'advertise': {  
-                        'vipType':'constant',
-                        'vipValue': [  
-                            {  
-                                'priority-order': [  
-                                    'protocol',
-                                    'route'
-                                ],
-                                'protocol': vip_object(vip_type='constant', vip_value='ospf'),
-                                'route': vip_object(vip_type='constant', vip_value='external'),
-                            },
-                            {  
-                                'priority-order': [  
-                                    'protocol'
-                                ],
-                                'protocol': vip_object(vip_type='constant', vip_value='connected'),
-                            },
-                            {  
-                                'priority-order':  [  
-                                    'protocol'
-                                ],
-                                'protocol': vip_object(vip_type='constant', vip_value='static'),
-                            }
-                        ],
-                        'vipObjectType': 'tree',
-                        'vipPrimaryKey': [  
-                            'protocol'
-                        ]
-                    }
-                })
+                'graceful-restart': vip_object(vip_value='true'),
+                'send-path-limit': vip_object(vip_value=4),
+                'ecmp-limit': vip_object(vip_value=4),
+                'shutdown': vip_object(vip_value='false'),
+                'timers': {
+                    'advertisement-interval': vip_object(vip_value=1),
+                    'graceful-restart-timer': vip_object(vip_value=43200),
+                    'holdtime': vip_object(vip_value=60),
+                    'eor-timer': vip_object(vip_value=300),
+                },
+                'advertise': {
+                    'vipType':'constant',
+                    'vipValue': [
+                        {
+                            'priority-order': [
+                                'protocol',
+                                'route'
+                            ],
+                            'protocol': vip_object(vip_type='constant', vip_value='ospf'),
+                            'route': vip_object(vip_type='constant', vip_value='external'),
+                        },
+                        {
+                            'priority-order': [
+                                'protocol'
+                            ],
+                            'protocol': vip_object(vip_type='constant', vip_value='connected'),
+                        },
+                        {
+                            'priority-order':  [
+                                'protocol'
+                            ],
+                            'protocol': vip_object(vip_type='constant', vip_value='static'),
+                        }
+                    ],
+                    'vipObjectType': 'tree',
+                    'vipPrimaryKey': [
+                        'protocol'
+                    ]
+                }
+            })
 
         elif device_type == 'vsmart':
             template_definition.update({
-                    'graceful-restart': vip_object(vip_value='true'),
-                    'send-path-limit': vip_object(vip_value=4),
-                    'send-backup-paths': vip_object(vip_value='false'),
-                    'discard-rejected': vip_object(vip_value='false'),
-                    'shutdown': vip_object(vip_value='false'),
-                    'timers': {  
-                        'advertisement-interval': vip_object(vip_value=1),
-                        'graceful-restart-timer': vip_object(vip_value=43200),
-                        'holdtime': vip_object(vip_value=60),
-                        'eor-timer': vip_object(vip_value=300),
+                'graceful-restart': vip_object(vip_value='true'),
+                'send-path-limit': vip_object(vip_value=4),
+                'send-backup-paths': vip_object(vip_value='false'),
+                'discard-rejected': vip_object(vip_value='false'),
+                'shutdown': vip_object(vip_value='false'),
+                'timers': {
+                    'advertisement-interval': vip_object(vip_value=1),
+                    'graceful-restart-timer': vip_object(vip_value=43200),
+                    'holdtime': vip_object(vip_value=60),
+                    'eor-timer': vip_object(vip_value=300),
                     }
                 })
 
@@ -720,7 +748,7 @@ class Viptela(object):
         else:
             models = DEVICE_MODEL_MAP['vsmart']
 
-        payload = {  
+        payload = {
             'templateName': template_name,
             'templateDescription': template_description,
             'templateType': 'omp-{0}'.format(device_type),
@@ -735,7 +763,10 @@ class Viptela(object):
         return self._post(self.session, url, data=json.dumps(payload))
 
     def set_policy_vsmart(self, policy_name, policy_description, policy_configuration):
-        payload = {  
+        """
+        vSmart policy
+        """
+        payload = {
             'policyName': policy_name,
             'policyDescription':  policy_description,
             'policyDefinition': policy_configuration,
@@ -744,17 +775,22 @@ class Viptela(object):
         return self._post(self.session, url, data=json.dumps(payload))
 
     def set_template_ntp(self, template_name, template_description, ntp_servers=None):
-
+        """
+        NTP Template
+        """
         def ntp_server_list(ntp_servers):
+            """
+            Build NTP server list
+            """
             for server in ntp_servers:
-                yield({  
+                yield({
                     'name': vip_object(vip_type='constant', vip_value=server['ipv4_address']),
                     'key': vip_object(vip_type='ignore'),
                     'vpn': vip_object(vip_type='ignore', vip_value=server['vpn']),
                     'version': vip_object(vip_type='ignore', vip_value=server['version']),
                     'source-interface': vip_object(vip_type='ignore'),
                     'prefer': vip_object(vip_type='constant', vip_value=server['prefer']),
-                    'priority-order': [  
+                    'priority-order': [
                         'name',
                         'key',
                         'vpn',
@@ -764,26 +800,26 @@ class Viptela(object):
                     ]
                 })
 
-        payload = {  
+        payload = {
             'templateName': template_name,
             'templateDescription': template_description,
             'templateType': 'ntp',
             'templateMinVersion': '15.0.0',
-            'templateDefinition': {  
-                'keys': {  
-                    'trusted': {  
+            'templateDefinition': {
+                'keys': {
+                    'trusted': {
                         'vipObjectType': 'list',
                         'vipType': 'ignore'
                     }
                 },
                 'server': vip_object(
-                            vip_type='constant', 
-                            vip_value=[i for i in ntp_server_list(ntp_servers)],
-                            vip_object_type='tree',
-                            vip_primary_key=['name']
-                            ),
+                    vip_type='constant',
+                    vip_value=[i for i in ntp_server_list(ntp_servers)],
+                    vip_object_type='tree',
+                    vip_primary_key=['name']
+                    ),
             },
-            'deviceType': [i for i in DEVICE_MODEL_MAP], 
+            'deviceType': [i for i in DEVICE_MODEL_MAP],
             'deviceModels': [DEVICE_MODEL_MAP[i] for i in DEVICE_MODEL_MAP],
             'factoryDefault': False
         }
@@ -791,50 +827,53 @@ class Viptela(object):
         url = '{0}/template/feature'.format(self.base_url)
         return self._post(self.session, url, data=json.dumps(payload))
 
-    def set_template_snmpv2(self, template_name, template_description, 
+    def set_template_snmpv2(self, template_name, template_description,
                             snmp_contact, v2_community, shutdown='false'):
-        payload = {  
+        """
+        SNMP Template
+        """
+        payload = {
             'templateName': template_name,
             'templateDescription': template_description,
             'templateType': 'snmp',
             'templateMinVersion': '15.0.0',
-            'templateDefinition': {  
+            'templateDefinition': {
                 'shutdown': vip_object(vip_type='constant', vip_value=shutdown),
                 'contact': vip_object(vip_type='constant', vip_value=snmp_contact),
                 'name': vip_object(vip_type='variable'),
                 'location': vip_object(vip_type='variable'),
-                'view': {  
+                'view': {
                     'vipType': 'constant',
-                    'vipValue': [  
-                        {  
+                    'vipValue': [
+                        {
                             'name': vip_object(vip_type='constant', vip_value=v2_community),
                             'viewMode': 'add',
-                            'priority-order': [  
+                            'priority-order': [
                                 'name'
                             ]
                         }
                     ],
                     'vipObjectType': 'tree',
-                    'vipPrimaryKey': [  
+                    'vipPrimaryKey': [
                         'name'
                     ]
                 },
-                'trap': {  
-                    'group': {  
+                'trap': {
+                    'group': {
                         'vipType': 'ignore',
-                        'vipValue': [  
+                        'vipValue': [
                         ],
                         'vipObjectType': 'tree',
-                        'vipPrimaryKey': [  
+                        'vipPrimaryKey': [
                             'group-name'
                         ]
                     },
-                    'target': {  
+                    'target': {
                         'vipType': 'ignore',
-                        'vipValue': [  
+                        'vipValue': [
                         ],
                         'vipObjectType': 'tree',
-                        'vipPrimaryKey': [  
+                        'vipPrimaryKey': [
                             'vpn-id',
                             'ip',
                             'port'
@@ -842,10 +881,26 @@ class Viptela(object):
                     }
                 }
             },
-            'deviceType': ALL_DEVICE_TYPES, 
+            'deviceType': ALL_DEVICE_TYPES,
             'deviceModels': ALL_DEVICE_MODELS,
             'factoryDefault': False
         }
 
         url = '{0}/template/feature'.format(self.base_url)
         return self._post(self.session, url, data=json.dumps(payload))
+
+    def delete_template(self, template_name='', template_id=''):
+        """
+        Delete a template
+        TODO: Add logic to delete template via name
+        """
+        if not template_name and not template_id:
+            raise AttributeError('Either template_name or template_id is required')
+        elif template_name and template_id:
+            # add logging to ignore template name
+            query = template_id
+        else:
+            query = find_feature_template(self, template_id)
+
+        url = '{0}/template/feature/{1}'.format(self.base_url, query)
+        return self._delete(self.session, url)
