@@ -1,4 +1,6 @@
 import os
+
+import copy
 import json
 import requests
 
@@ -141,9 +143,10 @@ def import_provisioning_templates(api_class, template_directory):
                         api_class.session, api_class.base_url + '/template/feature', data=fd
                     )
                     new_template_id = post_response['templateId']
-
-
-
+                template_id_mapping[template_id] = new_template_id
+        new_device_template = copy.deepcopy(device_template)
+        for feature in new_device_template['generalTemplates']:
+            feature['templateId'] = template_id_mapping[feature['templateId']]
 
 
 
