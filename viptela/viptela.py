@@ -1,7 +1,8 @@
+import os
 import json
 import requests
 
-from collections import namedtuple
+from collections import OrderedDict, namedtuple
 from requests.exceptions import ConnectionError
 from . exceptions import LoginCredentialsError, LoginTimeoutError
 
@@ -101,6 +102,50 @@ def parse_response(response):
 
     elif response.status_code in HTTP_ERROR_CODES:
         return parse_http_error(response)
+
+
+def import_provisioning_templates(api_class, template_directory):
+    """Import templates from a given template directory into the vManage server."""
+    def load_json_from_file(fp):
+        with open(fp) as f:
+            return json.load(f, object_pairs_hook=OrderedDict)
+
+    feature_keys = ["templateName", "templateDescription", "templateType", "templateMinVersion",
+                    "deviceType", "factoryDefault", "templateDefinition"]
+    policy_keys = ["policyName", "policyDescription", "policyDefinition"]
+    device_template_keys = ["templateName", "templateDescription", "deviceType", "configType",
+                            "factoryDefault", "policyId", "featureTemplateUidRange",
+                            "generalTemplates"]
+    device_template_data = load_json_from_file(
+        os.path.join(template_directory, 'device_template.json')
+    )
+    feature_template_id_map = api_class.get(
+        api_class.session, api_class.base_url + '/template/device'
+    )
+    for device_template in device_template_data['templates']:
+        template_id_mapping = {}
+        feature_template_file = os.path.join(
+            template_directory, '{}_features.json'.format(device_template['templateName'])
+        )
+        if not os.path.exists(feature_template_file):
+            # TODO: Implement logging here!
+            continue
+        feature_data = load_json_from_file(feature_template_file)
+        for template_id in feature_data:
+            if template_id in feature_data:
+                fd = {k: v for k, v in feature_data[template_id].items() if k in feature_keys}
+                if fd['templateName'] in feature_template_id_map:
+                    new_template_id = feature_template_id_map[fd['templateName']]
+                else:
+                    post_response = api_class.post(
+                        api_class.session, api_class.base_url + '/template/feature', data=fd
+                    )
+                    new_template_id = post_response['templateId']
+
+
+
+
+
 
 
 class Viptela(object):
