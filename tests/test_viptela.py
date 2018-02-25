@@ -39,7 +39,7 @@ def base_viptela_no_login():
 class FakeViptela(Viptela):
     """ Override to test urls """
     @staticmethod
-    def _get(session, url, headers=None, timeout=10):
+    def get(session, url, headers=None, timeout=10):
         return url
 
 

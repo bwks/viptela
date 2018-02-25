@@ -106,11 +106,27 @@ def parse_response(response):
         return parse_http_error(response)
 
 
-def import_provisioning_templates(api_class, template_directory):
+def create_template_dict(template_dir):
+    template_dict = {}
+    json_files = [f for f in os.listdir(template_dir) if f.endswith('.json')]
+    for file in json_files:
+        with open(template_dir + file) as f:
+            raw_file = f.read()
+        template_dict[file.split('.json')[0]] = json.loads(raw_file)
+    return template_dict
+
+
+def import_provisioning_templates(api_class, template_dict):
     """Import templates from a given template directory into the vManage server."""
-    def load_json_from_file(fp):
-        with open(fp) as f:
-            return json.load(f, object_pairs_hook=OrderedDict)
+
+    def check_policy(policy_name):
+        return_data = api_class.get(
+            api_class.session, api_class.base_url + 'template/policy/vedge/'
+        )
+        for policy in return_data:
+            if policy['policyName'] == policy_name:
+                return policy['policyId']
+        return False
 
     feature_keys = ["templateName", "templateDescription", "templateType", "templateMinVersion",
                     "deviceType", "factoryDefault", "templateDefinition"]
@@ -118,21 +134,20 @@ def import_provisioning_templates(api_class, template_directory):
     device_template_keys = ["templateName", "templateDescription", "deviceType", "configType",
                             "factoryDefault", "policyId", "featureTemplateUidRange",
                             "generalTemplates"]
-    device_template_data = load_json_from_file(
-        os.path.join(template_directory, 'device_template.json')
-    )
+    device_template_data = template_dict.get('device_template')
     feature_template_id_map = api_class.get(
         api_class.session, api_class.base_url + '/template/device'
     )
     for device_template in device_template_data['templates']:
         template_id_mapping = {}
-        feature_template_file = os.path.join(
-            template_directory, '{}_features.json'.format(device_template['templateName'])
+        feature_data = template_dict.get(
+            '{}_features'.format(device_template['templateName']
+                                      )
         )
-        if not os.path.exists(feature_template_file):
+        if not feature_data:
             # TODO: Implement logging here!
+            # print "No feature templates"
             continue
-        feature_data = load_json_from_file(feature_template_file)
         for template_id in feature_data:
             if template_id in feature_data:
                 fd = {k: v for k, v in feature_data[template_id].items() if k in feature_keys}
@@ -140,15 +155,62 @@ def import_provisioning_templates(api_class, template_directory):
                     new_template_id = feature_template_id_map[fd['templateName']]
                 else:
                     post_response = api_class.post(
-                        api_class.session, api_class.base_url + '/template/feature', data=fd
+                        api_class.session, api_class.base_url + '/template/feature',
+                        data=json.dumps(fd)
                     )
                     new_template_id = post_response['templateId']
                 template_id_mapping[template_id] = new_template_id
         new_device_template = copy.deepcopy(device_template)
         for feature in new_device_template['generalTemplates']:
             feature['templateId'] = template_id_mapping[feature['templateId']]
-
-
+            if 'subTemplates' in feature:
+                for sub_temp in feature['subTemplates']:
+                    if 'subTemplates' in sub_temp:
+                        for template in sub_temp['subTemplates']:
+                            template['templateId'] = template_id_mapping[template['templateId']]
+                    sub_temp['templateId'] = template_id_mapping[sub_temp['templateId']]
+        if 'featureTemplateUidRange' in new_device_template and new_device_template.get(
+                'featureTemplateUidRange'):
+            for add_template in new_device_template['featureTemplateUidRange']:
+                add_template['templateId'] = template_id_mapping[add_template['templateId']]
+        if 'policyId' in device_template and device_template['policyId']:
+            policy_data = template_dict.get('{}_policy'.format(device_template['templateName']))
+            policy_id = device_template['policyId']
+            if policy_id not in policy_data:
+                # TODO: Logging here
+                # print 'Policy data missing in backup'
+                pass
+            pd = policy_data[policy_id]
+            ch = check_policy(pd['policyName'])
+            if ch is False:
+                for key in pd.keys():
+                    if key not in policy_keys:
+                        pd.pop(key, None)
+                _ = api_class.post(
+                    api_class.session, api_class.base_url + '/template/policy/vedge/',
+                    data=json.dumps(pd)
+                )
+                new_policy_id = check_policy(pd['policyName'])
+            else:
+                new_policy_id = ch
+            new_device_template['policyId'] = new_policy_id
+        for key in new_device_template.keys():
+            if key not in device_template_keys:
+                new_device_template.pop(key, None)
+        check_device = False
+        for device in api_class.get(api_class.session, api_class.base_url + '/template/device'):
+            if device['templateName'] == new_device_template['templateName']:
+                check_device = True
+                break
+        if not check_device:
+            _ = api_class.post(
+                api_class.session, api_class.base_url + '/template/device/feature/',
+                data=json.dumps(new_device_template)
+            )
+        else:
+            # TODO: Logging here
+            # print "Skipping %s" % new_device_template["templateName"]
+            pass
 
 
 class Viptela(object):
@@ -156,7 +218,7 @@ class Viptela(object):
     Class for use with Viptela vManage API.
     """
     @staticmethod
-    def _get(session, url, headers=None, timeout=10):
+    def get(session, url, headers=None, timeout=10):
         """
         Perform a HTTP get
         :param session: requests session
@@ -171,7 +233,7 @@ class Viptela(object):
         return parse_response(session.get(url=url, headers=headers, timeout=timeout))
 
     @staticmethod
-    def _put(session, url, headers=None, data=None, timeout=10):
+    def put(session, url, headers=None, data=None, timeout=10):
         """
         Perform a HTTP put
         :param session: requests session
@@ -191,7 +253,7 @@ class Viptela(object):
         return parse_response(session.put(url=url, headers=headers, data=data, timeout=timeout))
 
     @staticmethod
-    def _post(session, url, headers=None, data=None, timeout=10):
+    def post(session, url, headers=None, data=None, timeout=10):
         """
         Perform a HTTP post
         :param session: requests session
@@ -211,7 +273,7 @@ class Viptela(object):
         return parse_response(session.post(url=url, headers=headers, data=data, timeout=timeout))
 
     @staticmethod
-    def _delete(session, url, headers=None, data=None, timeout=10):
+    def delete(session, url, headers=None, data=None, timeout=10):
         """
         Perform a HTTP delete
         :param session: requests session
@@ -275,7 +337,7 @@ class Viptela(object):
         :return: Result named tuple
         """
         try:
-            login_result = self._post(
+            login_result = self.post(
                 session=self.session,
                 url='{0}/j_security_check'.format(self.base_url),
                 headers={'Content-Type': 'application/x-www-form-urlencoded'},
@@ -296,7 +358,7 @@ class Viptela(object):
         :return: Result named tuple
         """
         url = '{0}/settings/configuration/banner'.format(self.base_url)
-        return self._get(self.session, url)
+        return self.get(self.session, url)
 
     def set_banner(self, banner):
         """
@@ -306,7 +368,7 @@ class Viptela(object):
         """
         payload = {'mode': 'on', 'bannerDetail': banner}
         url = '{0}/settings/configuration/banner'.format(self.base_url)
-        return self._put(self.session, url, data=json.dumps(payload))
+        return self.put(self.session, url, data=json.dumps(payload))
 
     def get_device_by_type(self, device_type='vedges'):
         """
@@ -317,7 +379,7 @@ class Viptela(object):
         if device_type not in ['vedges', 'controllers']:
             raise ValueError('Invalid device type: {0}'.format(device_type))
         url = '{0}/system/device/{1}'.format(self.base_url, device_type)
-        return self._get(self.session, url)
+        return self.get(self.session, url)
 
     def get_all_devices(self):
         """
@@ -325,7 +387,7 @@ class Viptela(object):
         :return: Result named tuple
         """
         url = '{0}/device'.format(self.base_url)
-        return self._get(self.session, url)
+        return self.get(self.session, url)
 
     def get_running_config(self, device_uuid, attached=False):
         """
@@ -338,7 +400,7 @@ class Viptela(object):
             url = '{0}/template/config/attached/{1}'.format(self.base_url, device_uuid)
         else:
             url = '{0}/template/config/running/{1}'.format(self.base_url, device_uuid)
-        return self._get(self.session, url)
+        return self.get(self.session, url)
 
     def get_device_maps(self):
         """
@@ -346,7 +408,7 @@ class Viptela(object):
         :return: Result named tuple
         """
         url = '{0}/group/map/devices'.format(self.base_url)
-        return self._get(self.session, url)
+        return self.get(self.session, url)
 
     def get_arp_table(self, device_id):
         """
@@ -355,7 +417,7 @@ class Viptela(object):
         :return: Result named tuple
         """
         url = '{0}/device/arp?deviceId={1}'.format(self.base_url, device_id)
-        return self._get(self.session, url)
+        return self.get(self.session, url)
 
     def get_bgp_summary(self, device_id):
         """
@@ -364,7 +426,7 @@ class Viptela(object):
         :return: Result named tuple
         """
         url = '{0}/device/bgp/summary?deviceId={1}'.format(self.base_url, device_id)
-        return self._get(self.session, url)
+        return self.get(self.session, url)
 
     def get_bgp_routes(self, device_id):
         """
@@ -373,7 +435,7 @@ class Viptela(object):
         :return: Result named tuple
         """
         url = '{0}/device/bgp/routes?deviceId={1}'.format(self.base_url, device_id)
-        return self._get(self.session, url)
+        return self.get(self.session, url)
 
     def get_bgp_neighbours(self, device_id):
         """
@@ -382,7 +444,7 @@ class Viptela(object):
         :return: Result named tuple
         """
         url = '{0}/device/bgp/neighbors?deviceId={1}'.format(self.base_url, device_id)
-        return self._get(self.session, url)
+        return self.get(self.session, url)
 
     def get_ospf_routes(self, device_id):
         """
@@ -391,7 +453,7 @@ class Viptela(object):
         :return: Result named tuple
         """
         url = '{0}/device/ospf/routes?deviceId={1}'.format(self.base_url, device_id)
-        return self._get(self.session, url)
+        return self.get(self.session, url)
 
     def get_ospf_neighbours(self, device_id):
         """
@@ -400,7 +462,7 @@ class Viptela(object):
         :return: Result named tuple
         """
         url = '{0}/device/ospf/neighbor?deviceId={1}'.format(self.base_url, device_id)
-        return self._get(self.session, url)
+        return self.get(self.session, url)
 
     def get_ospf_database(self, device_id, summary=False):
         """
@@ -413,7 +475,7 @@ class Viptela(object):
             url = '{0}/device/ospf/databasesummary?deviceId={1}'.format(self.base_url, device_id)
         else:
             url = '{0}/device/ospf/database?deviceId={1}'.format(self.base_url, device_id)
-        return self._get(self.session, url)
+        return self.get(self.session, url)
 
     def get_ospf_interfaces(self, device_id):
         """
@@ -422,7 +484,7 @@ class Viptela(object):
         :return: Result named tuple
         """
         url = '{0}/device/ospf/interface?deviceId={1}'.format(self.base_url, device_id)
-        return self._get(self.session, url)
+        return self.get(self.session, url)
 
     def get_transport_connection(self, device_id):
         """
@@ -431,7 +493,7 @@ class Viptela(object):
         :return: Result named tuple
         """
         url = '{0}/device/transport/connection?deviceId={1}'.format(self.base_url, device_id)
-        return self._get(self.session, url)
+        return self.get(self.session, url)
 
     def get_tunnel_statistics(self, device_id):
         """
@@ -440,7 +502,7 @@ class Viptela(object):
         :return: Result named tuple
         """
         url = '{0}/device/tunnel/statistics?deviceId={1}'.format(self.base_url, device_id)
-        return self._get(self.session, url)
+        return self.get(self.session, url)
 
     def get_omp_peers(self, device_id, from_vmanage=False):
         """
@@ -454,7 +516,7 @@ class Viptela(object):
         else:
             url = '{0}/device/omp/peers?deviceId={1}'.format(self.base_url, device_id)
 
-        return self._get(self.session, url)
+        return self.get(self.session, url)
 
     def get_omp_summary(self, device_id):
         """
@@ -463,7 +525,7 @@ class Viptela(object):
         :return: Result named tuple
         """
         url = '{0}/device/omp/summary?deviceId={1}'.format(self.base_url, device_id)
-        return self._get(self.session, url)
+        return self.get(self.session, url)
 
     def get_cellular_modem(self, device_id):
         """
@@ -472,7 +534,7 @@ class Viptela(object):
         :return: Result named tuple
         """
         url = '{0}/device/cellular/modem?deviceId={1}'.format(self.base_url, device_id)
-        return self._get(self.session, url)
+        return self.get(self.session, url)
 
     def get_cellular_network(self, device_id):
         """
@@ -481,7 +543,7 @@ class Viptela(object):
         :return: Result named tuple
         """
         url = '{0}/device/cellular/network?deviceId={1}'.format(self.base_url, device_id)
-        return self._get(self.session, url)
+        return self.get(self.session, url)
 
     def get_cellular_profiles(self, device_id):
         """
@@ -490,7 +552,7 @@ class Viptela(object):
         :return: Result named tuple
         """
         url = '{0}/device/cellular/profiles?deviceId={1}'.format(self.base_url, device_id)
-        return self._get(self.session, url)
+        return self.get(self.session, url)
 
     def get_cellular_radio(self, device_id):
         """
@@ -499,7 +561,7 @@ class Viptela(object):
         :return: Result named tuple
         """
         url = '{0}/device/cellular/radio?deviceId={1}'.format(self.base_url, device_id)
-        return self._get(self.session, url)
+        return self.get(self.session, url)
 
     def get_cellular_status(self, device_id):
         """
@@ -508,7 +570,7 @@ class Viptela(object):
         :return: Result named tuple
         """
         url = '{0}/device/cellular/status?deviceId={1}'.format(self.base_url, device_id)
-        return self._get(self.session, url)
+        return self.get(self.session, url)
 
     def get_cellular_sessions(self, device_id):
         """
@@ -517,7 +579,7 @@ class Viptela(object):
         :return: Result named tuple
         """
         url = '{0}/device/cellular/sessions?deviceId={1}'.format(self.base_url, device_id)
-        return self._get(self.session, url)
+        return self.get(self.session, url)
 
     def get_ipsec_inbound(self, device_id):
         """
@@ -526,7 +588,7 @@ class Viptela(object):
         :return: Result named tuple
         """
         url = '{0}/device/ipsec/inbound?deviceId={1}'.format(self.base_url, device_id)
-        return self._get(self.session, url)
+        return self.get(self.session, url)
 
     def get_ipsec_outbound(self, device_id):
         """
@@ -535,7 +597,7 @@ class Viptela(object):
         :return: Result named tuple
         """
         url = '{0}/device/ipsec/outbound?deviceId={1}'.format(self.base_url, device_id)
-        return self._get(self.session, url)
+        return self.get(self.session, url)
 
     def get_ipsec_localsa(self, device_id):
         """
@@ -544,7 +606,7 @@ class Viptela(object):
         :return: Result named tuple
         """
         url = '{0}/device/ipsec/localsa?deviceId={1}'.format(self.base_url, device_id)
-        return self._get(self.session, url)
+        return self.get(self.session, url)
 
     def get_template_feature(self, template_id=''):
         """
@@ -556,4 +618,4 @@ class Viptela(object):
             url = '{0}/template/feature/object/{1}'.format(self.base_url, template_id)
         else:
             url = '{0}/template/feature'.format(self.base_url)
-        return self._get(self.session, url)
+        return self.get(self.session, url)
