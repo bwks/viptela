@@ -57,7 +57,8 @@ def import_provisioning_templates(api_class, template_dict):
                     api_class.session, api_class.base_url + constants.FEATURE_PATH
                 ).data
                 feature_template_id_map = {
-                    k[constants.TEMPLATE_NAME]: k[constants.TEMPLATE_ID] for k in feature_template_id_map_data
+                    k[constants.TEMPLATE_NAME]: k[constants.TEMPLATE_ID] for k in
+                    feature_template_id_map_data
                 }
                 if fd[constants.TEMPLATE_NAME] in feature_template_id_map:
                     new_template_id = feature_template_id_map[fd[constants.TEMPLATE_NAME]]
@@ -75,14 +76,22 @@ def import_provisioning_templates(api_class, template_dict):
                 for sub_temp in feature[constants.SUB_TEMPLATES]:
                     if constants.SUB_TEMPLATES in sub_temp:
                         for template in sub_temp[constants.SUB_TEMPLATES]:
-                            template[constants.TEMPLATE_ID] = template_id_mapping[template[constants.TEMPLATE_ID]]
-                    sub_temp[constants.TEMPLATE_ID] = template_id_mapping[sub_temp[constants.TEMPLATE_ID]]
+                            template[constants.TEMPLATE_ID] = template_id_mapping[
+                                template[constants.TEMPLATE_ID]
+                            ]
+                    sub_temp[constants.TEMPLATE_ID] = template_id_mapping[
+                        sub_temp[constants.TEMPLATE_ID]
+                    ]
         if constants.UID_RANGE in new_device_template and new_device_template.get(
                 constants.UID_RANGE):
             for add_template in new_device_template[constants.UID_RANGE]:
-                add_template[constants.TEMPLATE_ID] = template_id_mapping[add_template[constants.TEMPLATE_ID]]
+                add_template[constants.TEMPLATE_ID] = template_id_mapping[
+                    add_template[constants.TEMPLATE_ID]
+                ]
         if constants.POLICY_ID in device_template and device_template[constants.POLICY_ID]:
-            policy_data = template_dict.get('{}_policy'.format(device_template[constants.TEMPLATE_NAME]))
+            policy_data = template_dict.get(
+                '{}_policy'.format(device_template[constants.TEMPLATE_NAME])
+            )
             policy_id = device_template[constants.POLICY_ID]
             if policy_id not in policy_data:
                 # logger.debug('Policy data missing in source templates.')
