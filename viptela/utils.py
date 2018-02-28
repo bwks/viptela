@@ -23,8 +23,8 @@ def create_template_payload(name, description, template_type, min_version, defin
         constants.TEMPLATE_MIN_VERSION: min_version,
         constants.TEMPLATE_DEFINITION: definition,
         constants.FACTORY_DEFAULT: default,
-        constants.DEVICE_TYPE: device_type,
-        constants.DEVICE_MODELS: device_models,
+        constants.DEVICE_TYPE: list(device_type),
+        constants.DEVICE_MODELS: list(device_models),
     }
 
 

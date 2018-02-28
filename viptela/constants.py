@@ -7,6 +7,11 @@ CONSTANT = 'constant'
 DATA = 'data'
 DEVICE_MODELS = 'deviceModels'
 ERROR = 'error'
+FALSE = 'false'
+IGNORE = 'ignore'
+TRUE = 'true'
+V_15 = '15.0.0'
+VARIABLE = 'variable'
 
 # Keys used in interacting with templates.
 DEVICE_TYPE = 'deviceType'
@@ -62,7 +67,7 @@ HTTP_ERROR_CODES = {
     415: 'Unsupported Media Type',
     500: 'Internal Server Error'
 }
-HTTP_RESPONSE_CODES = dict(HTTP_SUCCESS_CODES, **HTTP_ERROR_CODES)
+HTTP_RESPONSE_CODES = {k: v for d in (HTTP_SUCCESS_CODES, HTTP_ERROR_CODES) for k, v in d.items()}
 
 # Various structures containing device model data.
 VEDGE = 'vedge'
