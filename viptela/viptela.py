@@ -112,25 +112,25 @@ def find_feature_template(session, template_name):
     raise ValueError('Template not found')
 
 
-def vip_object(vip_object_type='object', vip_type='ignore', vip_value=None,
+def vip_object(vip_object_type='object', vip_type=constants.IGNORE, vip_value=None,
                vip_variable_name=None, vip_primary_key=None):
     """
     VIP objects are used as configuration elements
     Build a vip object
     """
     vip = {
-        'vipObjectType': vip_object_type,
-        'vipType': vip_type,
+        constants.VIP_OBJECT_TYPE: vip_object_type,
+        constants.VIP_TYPE: vip_type,
     }
 
     if vip_value is not None:
-        vip.update({'vipValue': vip_value})
+        vip.update({constants.VIP_VALUE: vip_value})
 
     if vip_variable_name is not None:
         vip.update({'vipVariableName': vip_variable_name})
 
     if vip_primary_key is not None:
-        vip.update({'vipPrimaryKey': vip_primary_key})
+        vip.update({constants.VIP_PRIMARY_KEY: vip_primary_key})
 
     return vip
 
@@ -674,34 +674,35 @@ class Viptela(object):
                     'eor-timer': vip_object(vip_value=300),
                 },
                 'advertise': {
-                    'vipType': constants.CONSTANT,
-                    'vipValue': [
+                    constants.VIP_TYPE: constants.CONSTANT,
+                    constants.VIP_VALUE: [
                         {
-                            'priority-order': [
-                                'protocol',
+                            constants.PRIORITY_ORDER: [
+                                constants.PROTOCOL,
                                 'route'
                             ],
-                            'protocol': vip_object(vip_type=constants.CONSTANT, vip_value='ospf'),
+                            constants.PROTOCOL: vip_object(vip_type=constants.CONSTANT,
+                                                           vip_value='ospf'),
                             'route': vip_object(vip_type=constants.CONSTANT, vip_value='external'),
                         },
                         {
-                            'priority-order': [
-                                'protocol'
+                            constants.PRIORITY_ORDER: [
+                                constants.PROTOCOL
                             ],
-                            'protocol': vip_object(vip_type=constants.CONSTANT,
-                                                   vip_value='connected'),
+                            constants.PROTOCOL: vip_object(vip_type=constants.CONSTANT,
+                                                           vip_value='connected'),
                         },
                         {
-                            'priority-order': [
-                                'protocol'
+                            constants.PRIORITY_ORDER: [
+                                constants.PROTOCOL
                             ],
-                            'protocol': vip_object(vip_type=constants.CONSTANT,
-                                                   vip_value='static'),
+                            constants.PROTOCOL: vip_object(vip_type=constants.CONSTANT,
+                                                           vip_value='static'),
                         }
                     ],
-                    'vipObjectType': 'tree',
-                    'vipPrimaryKey': [
-                        'protocol'
+                    constants.VIP_OBJECT_TYPE: constants.TREE,
+                    constants.VIP_PRIMARY_KEY: [
+                        constants.PROTOCOL
                     ]
                 }
             })
@@ -752,15 +753,15 @@ class Viptela(object):
             """
             for server in ntp_servers:
                 yield ({
-                    'name': vip_object(vip_type=constants.CONSTANT,
-                                       vip_value=server['ipv4_address']),
+                    constants.NAME: vip_object(vip_type=constants.CONSTANT,
+                                               vip_value=server['ipv4_address']),
                     'key': vip_object(vip_type=constants.IGNORE),
                     'vpn': vip_object(vip_type=constants.IGNORE, vip_value=server['vpn']),
                     'version': vip_object(vip_type=constants.IGNORE, vip_value=server['version']),
                     'source-interface': vip_object(vip_type=constants.IGNORE),
                     'prefer': vip_object(vip_type=constants.CONSTANT, vip_value=server['prefer']),
                     'priority-order': [
-                        'name',
+                        constants.NAME,
                         'key',
                         'vpn',
                         'version',
@@ -777,15 +778,15 @@ class Viptela(object):
             definition={
                 'keys': {
                     'trusted': {
-                        'vipObjectType': 'list',
-                        'vipType': 'ignore'
+                        constants.VIP_OBJECT_TYPE: 'list',
+                        constants.VIP_TYPE: 'ignore'
                     }
                 },
                 'server': vip_object(
                     vip_type=constants.CONSTANT,
                     vip_value=[i for i in ntp_server_list(ntp_servers)],
-                    vip_object_type='tree',
-                    vip_primary_key=['name']
+                    vip_object_type=constants.TREE,
+                    vip_primary_key=[constants.NAME]
                 ),
             },
             device_type=constants.ALL_DEVICE_TYPES,
@@ -809,40 +810,40 @@ class Viptela(object):
             definition={
                 'shutdown': vip_object(vip_type=constants.CONSTANT, vip_value=shutdown),
                 'contact': vip_object(vip_type=constants.CONSTANT, vip_value=snmp_contact),
-                'name': vip_object(vip_type=constants.VARIABLE),
+                constants.NAME: vip_object(vip_type=constants.VARIABLE),
                 'location': vip_object(vip_type=constants.VARIABLE),
                 'view': {
-                    'vipType': constants.CONSTANT,
-                    'vipValue': [
+                    constants.VIP_TYPE: constants.CONSTANT,
+                    constants.VIP_VALUE: [
                         {
-                            'name': vip_object(vip_type=constants.CONSTANT, vip_value=v2_community),
+                            constants.NAME: vip_object(vip_type=constants.CONSTANT, vip_value=v2_community),
                             'viewMode': 'add',
                             'priority-order': [
-                                'name'
+                                constants.NAME
                             ]
                         }
                     ],
-                    'vipObjectType': 'tree',
-                    'vipPrimaryKey': [
-                        'name'
+                    constants.VIP_OBJECT_TYPE: constants.TREE,
+                    constants.VIP_PRIMARY_KEY: [
+                        constants.NAME
                     ]
                 },
                 'trap': {
                     'group': {
-                        'vipType': 'ignore',
-                        'vipValue': [
+                        constants.VIP_TYPE: constants.IGNORE,
+                        constants.VIP_VALUE: [
                         ],
-                        'vipObjectType': 'tree',
-                        'vipPrimaryKey': [
+                        constants.VIP_OBJECT_TYPE: constants.TREE,
+                        constants.VIP_PRIMARY_KEY: [
                             'group-name'
                         ]
                     },
                     'target': {
-                        'vipType': 'ignore',
-                        'vipValue': [
+                        constants.VIP_TYPE: constants.IGNORE,
+                        constants.VIP_VALUE: [
                         ],
-                        'vipObjectType': 'tree',
-                        'vipPrimaryKey': [
+                        constants.VIP_OBJECT_TYPE: constants.TREE,
+                        constants.VIP_PRIMARY_KEY: [
                             'vpn-id',
                             'ip',
                             'port'
