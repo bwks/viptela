@@ -7,10 +7,21 @@ _FEATURE = 'feature/'
 _TEMPLATE = '/template/'
 
 # URL paths used in interacting with the API.
+BANNER_PATH = '{0}/settings/configuration/banner'
+BASE_TEMPLATE_PATH = '{0}/template/feature'
 DEVICE_PATH = _TEMPLATE + _DEVICE
 DEVICE_FEATURE_PATH = _TEMPLATE + _DEVICE + _FEATURE
 FEATURE_PATH = _TEMPLATE + _FEATURE
 VEDGE_POLICY_PATH = _TEMPLATE + 'policy/vedge/'
+
+# Misc commonly used constants.
+STANDARD_JSON_HEADER = {'Connection': 'keep-alive', 'Content-Type': 'application/json'}
+
+# Misc commonly used keys.
+CONFIG = 'config'
+DATA = 'data'
+ERROR = 'error'
+TEMPLATE_DEFINITION = 'templateDefinition'
 
 # Keys used in interacting with templates.
 GENERAL_TEMPLATES = 'generalTemplates'

@@ -4,9 +4,18 @@
 import json
 import requests
 
-from collections import OrderedDict, namedtuple
+from collections import namedtuple
 from requests.exceptions import ConnectionError
+from . import constants
 from . exceptions import LoginCredentialsError, LoginTimeoutError
+
+
+# Minor difference between Python2 and Python3
+try:
+    from json.decoder import JSONDecodeError
+except ImportError:
+    JSONDecodeError = ValueError
+
 
 HTTP_SUCCESS_CODES = {
     200: 'Success',
@@ -41,12 +50,12 @@ def parse_http_success(response):
     if response.request.method in ['GET']:
         reason = HTTP_RESPONSE_CODES[response.status_code]
         error = ''
-        if response.json().get('data'):
-            json_response = response.json()['data']
-        elif response.json().get('config'):
-            json_response = response.json()['config']
-        elif response.json().get('templateDefinition'):
-            json_response = response.json()['templateDefinition']
+        if response.json().get(constants.DATA):
+            json_response = response.json()[constants.DATA]
+        elif response.json().get(constants.CONFIG):
+            json_response = response.json()[constants.CONFIG]
+        elif response.json().get(constants.TEMPLATE_DEFINITION):
+            json_response = response.json()[constants.TEMPLATE_DEFINITION]
         else:
             json_response = dict()
             reason = HTTP_RESPONSE_CODES[response.status_code]
@@ -54,7 +63,7 @@ def parse_http_success(response):
     else:
         try:
             json_response = json.loads(response.text)
-        except json.JSONDecodeError as _:
+        except JSONDecodeError:
             json_response = dict()
         reason = HTTP_RESPONSE_CODES[response.status_code]
         error = ''
@@ -78,8 +87,8 @@ def parse_http_error(response):
     """
     try:
         json_response = dict()
-        reason = response.json()['error']['details']
-        error = response.json()['error']['message']
+        reason = response.json()[constants.ERROR]['details']
+        error = response.json()[constants.ERROR]['message']
     except ValueError as e:
         json_response = dict()
         reason = HTTP_RESPONSE_CODES[response.status_code]
@@ -124,7 +133,7 @@ class Viptela(object):
         :return:
         """
         if headers is None:
-            headers = {'Connection': 'keep-alive', 'Content-Type': 'application/json'}
+            headers = constants.STANDARD_JSON_HEADER
 
         return parse_response(session.get(url=url, headers=headers, timeout=timeout))
 
@@ -141,7 +150,7 @@ class Viptela(object):
         """
         if headers is None:
             # add default headers for put
-            headers = {'Connection': 'keep-alive', 'Content-Type': 'application/json'}
+            headers = constants.STANDARD_JSON_HEADER
 
         if data is None:
             data = dict()
@@ -161,7 +170,7 @@ class Viptela(object):
         """
         if headers is None:
             # add default headers for post
-            headers = {'Connection': 'keep-alive', 'Content-Type': 'application/json'}
+            headers = constants.STANDARD_JSON_HEADER
 
         if data is None:
             data = dict()
@@ -181,12 +190,12 @@ class Viptela(object):
         """
         if headers is None:
             # add default headers for delete
-            headers = {'Connection': 'keep-alive', 'Content-Type': 'application/json'}
+            headers = constants.STANDARD_JSON_HEADER
 
         if data is None:
             data = dict()
-
-        pass
+        _ = session, url, timeout, headers, data
+        raise NotImplementedError
 
     def __init__(self, user, user_pass, vmanage_server, vmanage_server_port=8443,
                  verify=False, disable_warnings=False, timeout=10, auto_login=True):
@@ -253,7 +262,7 @@ class Viptela(object):
         Get vManager banner
         :return: Result named tuple
         """
-        url = '{0}/settings/configuration/banner'.format(self.base_url)
+        url = constants.BANNER_PATH.format(self.base_url)
         return self.get(self.session, url)
 
     def set_banner(self, banner):
@@ -263,7 +272,7 @@ class Viptela(object):
         :return: Result named tuple
         """
         payload = {'mode': 'on', 'bannerDetail': banner}
-        url = '{0}/settings/configuration/banner'.format(self.base_url)
+        url = constants.BANNER_PATH.format(self.base_url)
         return self.put(self.session, url, data=json.dumps(payload))
 
     def get_device_by_type(self, device_type='vedges'):
@@ -510,8 +519,7 @@ class Viptela(object):
         :param template_id: template ID
         :return: Result named tuple
         """
+        url = constants.BASE_TEMPLATE_PATH
         if template_id:
-            url = '{0}/template/feature/object/{1}'.format(self.base_url, template_id)
-        else:
-            url = '{0}/template/feature'.format(self.base_url)
+            url += '/object/{1}'.format(self.base_url, template_id)
         return self.get(self.session, url)
