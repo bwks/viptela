@@ -14,9 +14,9 @@ from viptela.viptela import (
     Viptela,
     parse_http_success,
     parse_http_error,
-    Result,
-    HTTP_RESPONSE_CODES
+    Result
 )
+from viptela.constants import HTTP_RESPONSE_CODES
 
 
 @pytest.fixture

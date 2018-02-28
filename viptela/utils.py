@@ -14,6 +14,20 @@ from . import constants
 logger = logging.getLogger(__name__)
 
 
+def create_template_payload(name, description, template_type, min_version, definition, default,
+                            device_type, device_models):
+    return {
+        constants.TEMPLATE_NAME: name,
+        constants.TEMPLATE_DESCRIPTION: description,
+        constants.TEMPLATE_TYPE: template_type,
+        constants.TEMPLATE_MIN_VERSION: min_version,
+        constants.TEMPLATE_DEFINITION: definition,
+        constants.FACTORY_DEFAULT: default,
+        constants.DEVICE_TYPE: device_type,
+        constants.DEVICE_MODELS: device_models,
+    }
+
+
 def create_template_dict(template_dir):
     """Create a dict containing all of the JSON from a template directory for the vManage server."""
     if not template_dir.endswith('/'):
@@ -22,8 +36,7 @@ def create_template_dict(template_dir):
     json_files = [f for f in os.listdir(template_dir) if f.endswith('.json')]
     for file in json_files:
         with open(template_dir + file) as f:
-            raw_file = f.read()
-        template_dict[file.split('.json')[0]] = json.loads(raw_file)
+            template_dict[file.split('.json')[0]] = json.loads(f.read())
     return template_dict
 
 
