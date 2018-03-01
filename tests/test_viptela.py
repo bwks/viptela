@@ -11,11 +11,9 @@ except ImportError:
 
 from viptela.exceptions import LoginTimeoutError, LoginCredentialsError
 from viptela.viptela import (
-    Viptela,
-    parse_http_success,
-    parse_http_error,
-    Result
+    Viptela
 )
+from viptela.utils import Result, parse_http_success, parse_http_error
 from viptela.constants import HTTP_RESPONSE_CODES
 
 

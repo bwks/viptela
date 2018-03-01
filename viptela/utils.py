@@ -7,11 +7,136 @@ import copy
 import os
 import json
 import logging
+from collections import namedtuple
 
+from viptela import constants
 from . import constants
+
+# Minor difference between Python2 and Python3
+try:
+    from json.decoder import JSONDecodeError
+except ImportError:
+    JSONDecodeError = ValueError
 
 
 logger = logging.getLogger(__name__)
+
+# parse_response will return a namedtuple object
+Result = namedtuple('Result', [
+    'ok', 'status_code', 'error', 'reason', 'data', 'response'
+])
+
+
+def parse_http_success(response):
+    """
+    HTTP 2XX responses
+    :param response: requests response object
+    :return: namedtuple result object
+    """
+    if response.request.method in ['GET']:
+        reason = constants.HTTP_RESPONSE_CODES[response.status_code]
+        error = ''
+        if response.json().get(constants.DATA):
+            json_response = response.json()[constants.DATA]
+        elif response.json().get(constants.CONFIG):
+            json_response = response.json()[constants.CONFIG]
+        elif response.json().get(constants.TEMPLATE_DEFINITION):
+            json_response = response.json()[constants.TEMPLATE_DEFINITION]
+        else:
+            json_response = dict()
+            reason = constants.HTTP_RESPONSE_CODES[response.status_code]
+            error = 'No data received from device'
+    else:
+        try:
+            json_response = json.loads(response.text)
+        except JSONDecodeError:
+            json_response = dict()
+        reason = constants.HTTP_RESPONSE_CODES[response.status_code]
+        error = ''
+
+    result = Result(
+        ok=response.ok,
+        status_code=response.status_code,
+        reason=reason,
+        error=error,
+        data=json_response,
+        response=response,
+    )
+    return result
+
+
+def parse_http_error(response):
+    """
+    HTTP 4XX and 5XX responses
+    :param response: requests response object
+    :return: namedtuple result object
+    """
+    try:
+        json_response = dict()
+        reason = response.json()[constants.ERROR]['details']
+        error = response.json()[constants.ERROR]['message']
+    except ValueError as e:
+        json_response = dict()
+        reason = constants.HTTP_RESPONSE_CODES[response.status_code]
+        error = e
+
+    result = Result(
+        ok=response.ok,
+        status_code=response.status_code,
+        reason=reason,
+        error=error,
+        data=json_response,
+        response=response,
+    )
+    return result
+
+
+def parse_response(response):
+    """
+    Parse a request response object
+    :param response: requests response object
+    :return: namedtuple result object
+    """
+    if response.status_code in constants.HTTP_SUCCESS_CODES:
+        return parse_http_success(response)
+
+    elif response.status_code in constants.HTTP_ERROR_CODES:
+        return parse_http_error(response)
+
+
+def find_feature_template(session, template_name):
+    """
+    Find a feature template ID by template name.
+    """
+    all_templates = session.get_template_feature()
+
+    for i in all_templates.data[constants.DATA]:
+        if i[constants.TEMPLATE_NAME] == template_name:
+            return i[constants.TEMPLATE_ID]
+    raise ValueError('Template not found')
+
+
+def vip_object(vip_object_type='object', vip_type=constants.IGNORE, vip_value=None,
+               vip_variable_name=None, vip_primary_key=None):
+    """
+    VIP objects are used as configuration elements
+    Build a vip object
+    """
+    vip = {
+        constants.VIP_OBJECT_TYPE: vip_object_type,
+        constants.VIP_TYPE: vip_type,
+    }
+
+    if vip_value is not None:
+        vip.update({constants.VIP_VALUE: vip_value})
+
+    if vip_variable_name is not None:
+        vip.update({'vipVariableName': vip_variable_name})
+
+    if vip_primary_key is not None:
+        vip.update({constants.VIP_PRIMARY_KEY: vip_primary_key})
+
+    return vip
 
 
 def create_template_payload(name, description, template_type, min_version, definition, default,
@@ -64,7 +189,6 @@ def import_provisioning_templates(api_class, template_dict):
         return False
 
     device_template_data = template_dict.get('device_template')
-
     for device_template in device_template_data['templates']:
         id_map = {}
         feature_data = template_dict.get(
@@ -113,7 +237,7 @@ def import_provisioning_templates(api_class, template_dict):
 
         if device_template.get(constants.POLICY_ID):
             policy_data = template_dict.get(
-                '{}_policy'.format(device_template[constants.TEMPLATE_NAME])
+                '{}_policy'.format(device_template[constants.TEMPLATE_NAME]), {}
             )
             policy_id = device_template[constants.POLICY_ID]
 
@@ -135,21 +259,23 @@ def import_provisioning_templates(api_class, template_dict):
         new_device_template = {
             k: v for k, v in new_device_template.items() if k in constants.DEVICE_TEMPLATE_KEYS
         }
-        check_device = False
+        template_exists = False
         for device in api_class.get(
                 api_class.session, api_class.base_url + constants.DEVICE_PATH
         ).data:
             if device[constants.TEMPLATE_NAME] == new_device_template[constants.TEMPLATE_NAME]:
-                check_device = True
+                template_exists = True
                 break
 
-        if not check_device:
+        if not template_exists:
             _ = check_post_response(api_class.post(
                 api_class.session, api_class.base_url + constants.DEVICE_FEATURE_PATH,
                 data=json.dumps(new_device_template)
             ))
         else:
             # TODO: Logging here
-            # logger.debug('Skipping {}'.format(new_device_template[constants.TEMPLATE_NAME]))
+            # logger.debug('Skipping {} - template already exists'.format(
+            #     new_device_template[constants.TEMPLATE_NAME]
+            # ))
             pass
     return

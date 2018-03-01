@@ -4,135 +4,9 @@
 import json
 import requests
 
-from collections import namedtuple
 from requests.exceptions import ConnectionError
 
-from . import constants, utils
-from . exceptions import LoginCredentialsError, LoginTimeoutError
-
-
-# Minor difference between Python2 and Python3
-try:
-    from json.decoder import JSONDecodeError
-except ImportError:
-    JSONDecodeError = ValueError
-
-# parse_response will return a namedtuple object
-Result = namedtuple('Result', [
-    'ok', 'status_code', 'error', 'reason', 'data', 'response'
-])
-
-
-def parse_http_success(response):
-    """
-    HTTP 2XX responses
-    :param response: requests response object
-    :return: namedtuple result object
-    """
-    if response.request.method in ['GET']:
-        reason = constants.HTTP_RESPONSE_CODES[response.status_code]
-        error = ''
-        if response.json().get(constants.DATA):
-            json_response = response.json()[constants.DATA]
-        elif response.json().get(constants.CONFIG):
-            json_response = response.json()[constants.CONFIG]
-        elif response.json().get(constants.TEMPLATE_DEFINITION):
-            json_response = response.json()[constants.TEMPLATE_DEFINITION]
-        else:
-            json_response = dict()
-            reason = constants.HTTP_RESPONSE_CODES[response.status_code]
-            error = 'No data received from device'
-    else:
-        try:
-            json_response = json.loads(response.text)
-        except JSONDecodeError:
-            json_response = dict()
-        reason = constants.HTTP_RESPONSE_CODES[response.status_code]
-        error = ''
-
-    result = Result(
-        ok=response.ok,
-        status_code=response.status_code,
-        reason=reason,
-        error=error,
-        data=json_response,
-        response=response,
-    )
-    return result
-
-
-def parse_http_error(response):
-    """
-    HTTP 4XX and 5XX responses
-    :param response: requests response object
-    :return: namedtuple result object
-    """
-    try:
-        json_response = dict()
-        reason = response.json()[constants.ERROR]['details']
-        error = response.json()[constants.ERROR]['message']
-    except ValueError as e:
-        json_response = dict()
-        reason = constants.HTTP_RESPONSE_CODES[response.status_code]
-        error = e
-
-    result = Result(
-        ok=response.ok,
-        status_code=response.status_code,
-        reason=reason,
-        error=error,
-        data=json_response,
-        response=response,
-    )
-    return result
-
-
-def parse_response(response):
-    """
-    Parse a request response object
-    :param response: requests response object
-    :return: namedtuple result object
-    """
-    if response.status_code in constants.HTTP_SUCCESS_CODES:
-        return parse_http_success(response)
-
-    elif response.status_code in constants.HTTP_ERROR_CODES:
-        return parse_http_error(response)
-
-
-def find_feature_template(session, template_name):
-    """
-    Find a feature template ID by template name.
-    """
-    all_templates = session.get_template_feature()
-
-    for i in all_templates.data[constants.DATA]:
-        if i[constants.TEMPLATE_NAME] == template_name:
-            return i[constants.TEMPLATE_ID]
-    raise ValueError('Template not found')
-
-
-def vip_object(vip_object_type='object', vip_type=constants.IGNORE, vip_value=None,
-               vip_variable_name=None, vip_primary_key=None):
-    """
-    VIP objects are used as configuration elements
-    Build a vip object
-    """
-    vip = {
-        constants.VIP_OBJECT_TYPE: vip_object_type,
-        constants.VIP_TYPE: vip_type,
-    }
-
-    if vip_value is not None:
-        vip.update({constants.VIP_VALUE: vip_value})
-
-    if vip_variable_name is not None:
-        vip.update({'vipVariableName': vip_variable_name})
-
-    if vip_primary_key is not None:
-        vip.update({constants.VIP_PRIMARY_KEY: vip_primary_key})
-
-    return vip
+from . import constants, exceptions, utils
 
 
 class Viptela(object):
@@ -152,7 +26,7 @@ class Viptela(object):
         if headers is None:
             headers = constants.STANDARD_JSON_HEADER
 
-        return parse_response(session.get(url=url, headers=headers, timeout=timeout))
+        return utils.parse_response(session.get(url=url, headers=headers, timeout=timeout))
 
     @staticmethod
     def put(session, url, headers=None, data=None, timeout=10):
@@ -172,7 +46,9 @@ class Viptela(object):
         if data is None:
             data = dict()
 
-        return parse_response(session.put(url=url, headers=headers, data=data, timeout=timeout))
+        return utils.parse_response(
+            session.put(url=url, headers=headers, data=data, timeout=timeout)
+        )
 
     @staticmethod
     def post(session, url, headers=None, data=None, timeout=10):
@@ -192,7 +68,9 @@ class Viptela(object):
         if data is None:
             data = dict()
 
-        return parse_response(session.post(url=url, headers=headers, data=data, timeout=timeout))
+        return utils.parse_response(
+            session.post(url=url, headers=headers, data=data, timeout=timeout)
+        )
 
     @staticmethod
     def delete(session, url, headers=None, data=None, timeout=10):
@@ -212,7 +90,9 @@ class Viptela(object):
         if data is None:
             data = dict()
 
-        return parse_response(session.delete(url=url, headers=headers, data=data, timeout=timeout))
+        return utils.parse_response(
+            session.delete(url=url, headers=headers, data=data, timeout=timeout)
+        )
 
     def __init__(self, user, user_pass, vmanage_server, vmanage_server_port=8443,
                  verify=False, disable_warnings=False, timeout=10, auto_login=True):
@@ -267,10 +147,14 @@ class Viptela(object):
                 timeout=self.timeout
             )
         except ConnectionError:
-            raise LoginTimeoutError('Could not connect to {0}'.format(self.vmanage_server))
+            raise exceptions.LoginTimeoutError(
+                'Could not connect to {0}'.format(self.vmanage_server)
+            )
 
         if login_result.response.text.startswith('<html>'):
-            raise LoginCredentialsError('Could not login to device, check user credentials')
+            raise exceptions.LoginCredentialsError(
+                'Could not login to device, check user credentials'
+            )
         else:
             return login_result
 
@@ -438,7 +322,7 @@ class Viptela(object):
         if from_vmanage:
             url += 'synced/peers?deviceId={}'.format(device_id)
         else:
-            url += 'peers?deviceId={}'.format( device_id)
+            url += 'peers?deviceId={}'.format(device_id)
 
         return self.get(self.session, url)
 
@@ -577,14 +461,14 @@ class Viptela(object):
         template_definition = dict()
         if login_banner:
             template_definition.update({
-                'login': vip_object(
+                'login': utils.vip_object(
                     vip_type=constants.CONSTANT,
                     vip_value=login_banner,
                     vip_variable_name='banner_login')
             })
         if motd_banner:
             template_definition.update({
-                'motd': vip_object(
+                'motd': utils.vip_object(
                     vip_type=constants.CONSTANT,
                     vip_value=motd_banner,
                     vip_variable_name='banner_motd')
@@ -615,12 +499,12 @@ class Viptela(object):
         """
         disk_logging = {
             'disk': {
-                'enable': vip_object(vip_value=constants.TRUE),
+                'enable': utils.vip_object(vip_value=constants.TRUE),
                 'file': {
-                    'size': vip_object(vip_value=10),
-                    'rotate': vip_object(vip_value=10),
+                    'size': utils.vip_object(vip_value=10),
+                    'rotate': utils.vip_object(vip_value=10),
                 },
-                'priority': vip_object(vip_value='information'),
+                'priority': utils.vip_object(vip_value='information'),
             }
         }
 
@@ -653,25 +537,25 @@ class Viptela(object):
         vedges = [d for d in constants.ALL_DEVICE_TYPES if constants.VEDGE in d]
 
         template_definition = {
-                'graceful-restart': vip_object(vip_value=constants.TRUE),
-                'send-path-limit': vip_object(vip_value=4),
-                'shutdown': vip_object(vip_value=constants.FALSE),
+                'graceful-restart': utils.vip_object(vip_value=constants.TRUE),
+                'send-path-limit': utils.vip_object(vip_value=4),
+                'shutdown': utils.vip_object(vip_value=constants.FALSE),
                 'timers': {
-                    'advertisement-interval': vip_object(vip_value=1),
-                    'graceful-restart-timer': vip_object(vip_value=43200),
-                    'holdtime': vip_object(vip_value=60),
-                    'eor-timer': vip_object(vip_value=300),
+                    'advertisement-interval': utils.vip_object(vip_value=1),
+                    'graceful-restart-timer': utils.vip_object(vip_value=43200),
+                    'holdtime': utils.vip_object(vip_value=60),
+                    'eor-timer': utils.vip_object(vip_value=300),
                 }
             }
 
         if device_type == constants.VEDGE:
             template_definition.update({
-                'ecmp-limit': vip_object(vip_value=4),
+                'ecmp-limit': utils.vip_object(vip_value=4),
                 'timers': {
-                    'advertisement-interval': vip_object(vip_value=1),
-                    'graceful-restart-timer': vip_object(vip_value=43200),
-                    'holdtime': vip_object(vip_value=60),
-                    'eor-timer': vip_object(vip_value=300),
+                    'advertisement-interval': utils.vip_object(vip_value=1),
+                    'graceful-restart-timer': utils.vip_object(vip_value=43200),
+                    'holdtime': utils.vip_object(vip_value=60),
+                    'eor-timer': utils.vip_object(vip_value=300),
                 },
                 'advertise': {
                     constants.VIP_TYPE: constants.CONSTANT,
@@ -681,23 +565,24 @@ class Viptela(object):
                                 constants.PROTOCOL,
                                 'route'
                             ],
-                            constants.PROTOCOL: vip_object(vip_type=constants.CONSTANT,
-                                                           vip_value='ospf'),
-                            'route': vip_object(vip_type=constants.CONSTANT, vip_value='external'),
+                            constants.PROTOCOL: utils.vip_object(vip_type=constants.CONSTANT,
+                                                                 vip_value='ospf'),
+                            'route': utils.vip_object(vip_type=constants.CONSTANT,
+                                                      vip_value='external'),
                         },
                         {
                             constants.PRIORITY_ORDER: [
                                 constants.PROTOCOL
                             ],
-                            constants.PROTOCOL: vip_object(vip_type=constants.CONSTANT,
-                                                           vip_value='connected'),
+                            constants.PROTOCOL: utils.vip_object(vip_type=constants.CONSTANT,
+                                                                 vip_value='connected'),
                         },
                         {
                             constants.PRIORITY_ORDER: [
                                 constants.PROTOCOL
                             ],
-                            constants.PROTOCOL: vip_object(vip_type=constants.CONSTANT,
-                                                           vip_value='static'),
+                            constants.PROTOCOL: utils.vip_object(vip_type=constants.CONSTANT,
+                                                                 vip_value='static'),
                         }
                     ],
                     constants.VIP_OBJECT_TYPE: constants.TREE,
@@ -710,8 +595,8 @@ class Viptela(object):
 
         else:
             template_definition.update({
-                'send-backup-paths': vip_object(vip_value=constants.FALSE),
-                'discard-rejected': vip_object(vip_value=constants.FALSE),
+                'send-backup-paths': utils.vip_object(vip_value=constants.FALSE),
+                'discard-rejected': utils.vip_object(vip_value=constants.FALSE),
             })
             models = constants.DEVICE_MODEL_MAP[constants.VSMART]
 
@@ -747,19 +632,21 @@ class Viptela(object):
         NTP Template
         """
 
-        def ntp_server_list(ntp_servers):
+        def ntp_server_list(server_list):
             """
             Build NTP server list
             """
-            for server in ntp_servers:
+            for server in server_list:
                 yield ({
-                    constants.NAME: vip_object(vip_type=constants.CONSTANT,
-                                               vip_value=server['ipv4_address']),
-                    'key': vip_object(vip_type=constants.IGNORE),
-                    'vpn': vip_object(vip_type=constants.IGNORE, vip_value=server['vpn']),
-                    'version': vip_object(vip_type=constants.IGNORE, vip_value=server['version']),
-                    'source-interface': vip_object(vip_type=constants.IGNORE),
-                    'prefer': vip_object(vip_type=constants.CONSTANT, vip_value=server['prefer']),
+                    constants.NAME: utils.vip_object(vip_type=constants.CONSTANT,
+                                                     vip_value=server['ipv4_address']),
+                    'key': utils.vip_object(vip_type=constants.IGNORE),
+                    'vpn': utils.vip_object(vip_type=constants.IGNORE, vip_value=server['vpn']),
+                    'version': utils.vip_object(
+                        vip_type=constants.IGNORE, vip_value=server['version']),
+                    'source-interface': utils.vip_object(vip_type=constants.IGNORE),
+                    'prefer': utils.vip_object(
+                        vip_type=constants.CONSTANT, vip_value=server['prefer']),
                     'priority-order': [
                         constants.NAME,
                         'key',
@@ -782,7 +669,7 @@ class Viptela(object):
                         constants.VIP_TYPE: 'ignore'
                     }
                 },
-                'server': vip_object(
+                'server': utils.vip_object(
                     vip_type=constants.CONSTANT,
                     vip_value=[i for i in ntp_server_list(ntp_servers)],
                     vip_object_type=constants.TREE,
@@ -808,15 +695,16 @@ class Viptela(object):
             template_type='snmp',
             min_version=constants.V_15,
             definition={
-                'shutdown': vip_object(vip_type=constants.CONSTANT, vip_value=shutdown),
-                'contact': vip_object(vip_type=constants.CONSTANT, vip_value=snmp_contact),
-                constants.NAME: vip_object(vip_type=constants.VARIABLE),
-                'location': vip_object(vip_type=constants.VARIABLE),
+                'shutdown': utils.vip_object(vip_type=constants.CONSTANT, vip_value=shutdown),
+                'contact': utils.vip_object(vip_type=constants.CONSTANT, vip_value=snmp_contact),
+                constants.NAME: utils.vip_object(vip_type=constants.VARIABLE),
+                'location': utils.vip_object(vip_type=constants.VARIABLE),
                 'view': {
                     constants.VIP_TYPE: constants.CONSTANT,
                     constants.VIP_VALUE: [
                         {
-                            constants.NAME: vip_object(vip_type=constants.CONSTANT, vip_value=v2_community),
+                            constants.NAME: utils.vip_object(
+                                vip_type=constants.CONSTANT, vip_value=v2_community),
                             'viewMode': 'add',
                             'priority-order': [
                                 constants.NAME
@@ -870,7 +758,7 @@ class Viptela(object):
             # add logging to ignore template name
             query = template_id
         else:
-            query = find_feature_template(self, template_id)
+            query = utils.find_feature_template(self, template_id)
 
         url = constants.BASE_TEMPLATE_PATH.format(self.base_url) + '/{}'.format(query)
         return self.delete(self.session, url)
