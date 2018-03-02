@@ -64,6 +64,7 @@ DEVICE_TEMPLATE_KEYS = [
 ]
 
 # Constants used for interacting with HTTP methods.
+STANDARD_HTTP_TIMEOUT = 10
 STANDARD_JSON_HEADER = {'Connection': 'keep-alive', 'Content-Type': 'application/json'}
 HTTP_SUCCESS_CODES = {
     200: 'Success',

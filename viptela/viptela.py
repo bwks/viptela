@@ -14,7 +14,7 @@ class Viptela(object):
     Class for use with Viptela vManage API.
     """
     @staticmethod
-    def get(session, url, headers=None, timeout=10):
+    def get(session, url, headers=None, timeout=constants.STANDARD_HTTP_TIMEOUT):
         """
         Perform a HTTP get
         :param session: requests session
@@ -29,7 +29,7 @@ class Viptela(object):
         return utils.parse_response(session.get(url=url, headers=headers, timeout=timeout))
 
     @staticmethod
-    def put(session, url, headers=None, data=None, timeout=10):
+    def put(session, url, headers=None, data=None, timeout=constants.STANDARD_HTTP_TIMEOUT):
         """
         Perform a HTTP put
         :param session: requests session
@@ -51,7 +51,7 @@ class Viptela(object):
         )
 
     @staticmethod
-    def post(session, url, headers=None, data=None, timeout=10):
+    def post(session, url, headers=None, data=None, timeout=constants.STANDARD_HTTP_TIMEOUT):
         """
         Perform a HTTP post
         :param session: requests session
@@ -73,7 +73,7 @@ class Viptela(object):
         )
 
     @staticmethod
-    def delete(session, url, headers=None, data=None, timeout=10):
+    def delete(session, url, headers=None, data=None, timeout=constants.STANDARD_HTTP_TIMEOUT):
         """
         Perform a HTTP delete
         :param session: requests session
@@ -95,7 +95,8 @@ class Viptela(object):
         )
 
     def __init__(self, user, user_pass, vmanage_server, vmanage_server_port=8443,
-                 verify=False, disable_warnings=False, timeout=10, auto_login=True):
+                 verify=False, disable_warnings=False, timeout=constants.STANDARD_HTTP_TIMEOUT,
+                 auto_login=True):
         """
         Init method for Viptela class
         :param user: API user name
