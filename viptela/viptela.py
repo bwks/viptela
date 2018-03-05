@@ -13,6 +13,7 @@ class Viptela(object):
     """
     Class for use with Viptela vManage API.
     """
+
     @staticmethod
     def get(session, url, headers=None, timeout=constants.STANDARD_HTTP_TIMEOUT):
         """
@@ -133,6 +134,9 @@ class Viptela(object):
         # login
         if self.auto_login:
             self.login_result = self.login()
+        # Mapping between US and British style spelling.
+        self.get_bgp_neighbors = self.get_bgp_neighbours
+        self.get_ospf_neighbors = self.get_ospf_neighbours
 
     def login(self):
         """
