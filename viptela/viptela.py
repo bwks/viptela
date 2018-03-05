@@ -164,7 +164,7 @@ class Viptela(object):
         Get vManager banner
         :return: Result named tuple
         """
-        url = constants.BANNER_PATH.format(self.base_url)
+        url = constants.BANNER_PATH_W_BASE.format(self.base_url)
         return self.get(self.session, url)
 
     def set_banner(self, banner):
@@ -174,7 +174,7 @@ class Viptela(object):
         :return: Result named tuple
         """
         payload = {'mode': 'on', 'bannerDetail': banner}
-        url = constants.BANNER_PATH.format(self.base_url)
+        url = constants.BANNER_PATH_W_BASE.format(self.base_url)
         return self.put(self.session, url, data=json.dumps(payload))
 
     def get_device_by_type(self, device_type='vedges'):
@@ -423,7 +423,7 @@ class Viptela(object):
         :param template_id: template ID
         :return: Result named tuple
         """
-        url = constants.BASE_TEMPLATE_PATH.format(self.base_url)
+        url = constants.BASE_TEMPLATE_PATH_W_BASE.format(self.base_url)
         if template_id:
             url += '/object/{0}'.format(template_id)
         return self.get(self.session, url)
@@ -432,7 +432,7 @@ class Viptela(object):
         """
         Set AAA template
         """
-        url = constants.BASE_TEMPLATE_PATH.format(self.base_url)
+        url = constants.BASE_TEMPLATE_PATH_W_BASE.format(self.base_url)
         return self.post(self.session, url, data=data)
 
     def set_template_banner(self, template_name, template_description,
@@ -486,7 +486,7 @@ class Viptela(object):
             device_models=constants.ALL_DEVICE_MODELS
         )
 
-        url = constants.BASE_TEMPLATE_PATH.format(self.base_url)
+        url = constants.BASE_TEMPLATE_PATH_W_BASE.format(self.base_url)
         return self.post(self.session, url, data=json.dumps(payload))
 
     def set_template_logging(self, template_name, template_description, device_models=None):
@@ -522,7 +522,7 @@ class Viptela(object):
             device_models=constants.ALL_DEVICE_MODELS,
         )
 
-        url = constants.BASE_TEMPLATE_PATH.format(self.base_url)
+        url = constants.BASE_TEMPLATE_PATH_W_BASE.format(self.base_url)
         return self.post(self.session, url, data=json.dumps(payload))
 
     def set_template_omp(self, template_name, template_description, device_type):
@@ -613,7 +613,7 @@ class Viptela(object):
             default=False
         )
 
-        url = constants.BASE_TEMPLATE_PATH.format(self.base_url)
+        url = constants.BASE_TEMPLATE_PATH_W_BASE.format(self.base_url)
         return self.post(self.session, url, data=json.dumps(payload))
 
     def set_policy_vsmart(self, policy_name, policy_description, policy_configuration):
@@ -625,7 +625,7 @@ class Viptela(object):
             constants.POLICY_DESCRIPTION: policy_description,
             constants.POLICY_DEFINITION: policy_configuration,
         }
-        url = constants.VSMART_POLICY_PATH.format(self.base_url)
+        url = constants.VSMART_POLICY_PATH_W_BASE.format(self.base_url)
         return self.post(self.session, url, data=json.dumps(payload))
 
     def set_template_ntp(self, template_name, template_description, ntp_servers=None):
@@ -682,7 +682,7 @@ class Viptela(object):
             default=False
         )
 
-        url = constants.BASE_TEMPLATE_PATH.format(self.base_url)
+        url = constants.BASE_TEMPLATE_PATH_W_BASE.format(self.base_url)
         return self.post(self.session, url, data=json.dumps(payload))
 
     def set_template_snmpv2(self, template_name, template_description,
@@ -745,7 +745,7 @@ class Viptela(object):
             default=False
         )
 
-        url = constants.BASE_TEMPLATE_PATH.format(self.base_url)
+        url = constants.BASE_TEMPLATE_PATH_W_BASE.format(self.base_url)
         return self.post(self.session, url, data=json.dumps(payload))
 
     def delete_template(self, template_name='', template_id=''):
@@ -755,11 +755,11 @@ class Viptela(object):
         """
         if not template_name and not template_id:
             raise AttributeError('Either template_name or template_id is required')
-        elif template_name and template_id:
+        elif template_id:
             # add logging to ignore template name
             query = template_id
         else:
-            query = utils.find_feature_template(self, template_id)
+            query = utils.find_feature_template(self, template_name)
 
-        url = constants.BASE_TEMPLATE_PATH.format(self.base_url) + '/{}'.format(query)
+        url = constants.BASE_TEMPLATE_PATH_W_BASE.format(self.base_url) + '/{}'.format(query)
         return self.delete(self.session, url)

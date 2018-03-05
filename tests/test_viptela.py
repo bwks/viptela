@@ -174,7 +174,7 @@ class TestViptelaSetMethods(object):
                 '"constant", "vipValue": "this is a mock banner string", "vipVariableName": '
                 '"banner_login"}, "motd": {"vipObjectType": "object", "vipType": "constant", '
                 '"vipValue": "this is a mock banner string", "vipVariableName": "banner_motd"}}, '
-                '"factoryDefault": false, "deviceType": ["vedge-cloud"], "deviceModels": [{"name":'
+                '"factoryDefault": false, "deviceType": ["vedge-cloud"], "deviceModels": [{"name": '
                 '"vedge-cloud", "displayName": "vEdge Cloud", "deviceType": "vedge"}, {"name": '
                 '"vedge-100", "displayName": "vEdge 100", "deviceType": "vedge"}, {"name": '
                 '"vedge-100-B", "displayName": "vEdge 100 B", "deviceType": "vedge"}, {"name": '
@@ -184,6 +184,217 @@ class TestViptelaSetMethods(object):
                 '"vedge-2000", "displayName": "vEdge 2000", "deviceType": "vedge"}, {"name": '
                 '"vmanage", "displayName": "vManage", "deviceType": "vmanage"}, {"name": '
                 '"vsmart", "displayName": "vSmart", "deviceType": "vsmart"}]}') == return_data.data
+
+    def test_set_template_logging(self):
+        return_data = self.viptela_device.set_template_logging(
+            template_name=_MOCK_TEMPLATE_NAME, template_description=_MOCK_TEMPLATE_DESC,
+            device_models='vedge-cloud')
+        assert 'https://test:8443/dataservice/template/feature' == return_data.url
+        assert ('{"templateName": "mock template", "templateDescription": "mock template '
+                'description", "templateType": "logging", "templateMinVersion": "15.0.0", '
+                '"templateDefinition": {"disk": {"enable": {"vipObjectType": "object", '
+                '"vipType": "ignore", "vipValue": "true"}, "file": {"size": {"vipObjectType": '
+                '"object", "vipType": "ignore", "vipValue": 10}, "rotate": {"vipObjectType": '
+                '"object", "vipType": "ignore", "vipValue": 10}}, "priority": {"vipObjectType": '
+                '"object", "vipType": "ignore", "vipValue": "information"}}}, "factoryDefault": '
+                'false, "deviceType": ["v", "e", "d", "g", "e", "-", "c", "l", "o", "u", "d"], '
+                '"deviceModels": [{"name": "vedge-cloud", "displayName": "vEdge Cloud", '
+                '"deviceType": "vedge"}, {"name": "vedge-100", "displayName": "vEdge 100", '
+                '"deviceType": "vedge"}, {"name": "vedge-100-B", "displayName": "vEdge 100 B", '
+                '"deviceType": "vedge"}, {"name": "vedge-100-M", "displayName": "vEdge 100 M", '
+                '"deviceType": "vedge"}, {"name": "vedge-100-WM", "displayName": "vEdge 100 WM", '
+                '"deviceType": "vedge"}, {"name": "vedge-1000", "displayName": "vEdge 1000", '
+                '"deviceType": "vedge"}, {"name": "vedge-2000", "displayName": "vEdge 2000", '
+                '"deviceType": "vedge"}, {"name": "vmanage", "displayName": "vManage", '
+                '"deviceType": "vmanage"}, {"name": "vsmart", "displayName": "vSmart", '
+                '"deviceType": "vsmart"}]}') == return_data.data
+
+    def test_set_template_omp_bad_device(self):
+        with pytest.raises(AttributeError) as excinfo:
+            self.viptela_device.set_template_omp(template_name=_MOCK_TEMPLATE_NAME,
+                                                 template_description=_MOCK_TEMPLATE_DESC,
+                                                 device_type='vmanage')
+        assert 'Invalid device type. Valid types are: vedge, vsmart' == str(excinfo.value)
+
+    def test_set_template_omp_vedge(self):
+        return_data = self.viptela_device.set_template_omp(
+            template_name=_MOCK_TEMPLATE_NAME, template_description=_MOCK_TEMPLATE_DESC,
+            device_type='vedge')
+        assert 'https://test:8443/dataservice/template/feature' == return_data.url
+        assert ('{"templateName": "mock template", "templateDescription": "mock template '
+                'description", "templateType": "omp-vedge", "templateMinVersion": "15.0.0", '
+                '"templateDefinition": {"graceful-restart": {"vipObjectType": "object", "vipType": '
+                '"ignore", "vipValue": "true"}, "send-path-limit": {"vipObjectType": "object", '
+                '"vipType": "ignore", "vipValue": 4}, "shutdown": {"vipObjectType": "object", '
+                '"vipType": "ignore", "vipValue": "false"}, "timers": {"advertisement-interval": '
+                '{"vipObjectType": "object", "vipType": "ignore", "vipValue": 1}, '
+                '"graceful-restart-timer": {"vipObjectType": "object", "vipType": "ignore", '
+                '"vipValue": 43200}, "holdtime": {"vipObjectType": "object", "vipType": "ignore", '
+                '"vipValue": 60}, "eor-timer": {"vipObjectType": "object", "vipType": "ignore", '
+                '"vipValue": 300}}, "ecmp-limit": {"vipObjectType": "object", "vipType": "ignore", '
+                '"vipValue": 4}, "advertise": {"vipType": "constant", "vipValue": '
+                '[{"priority-order": ["protocol", "route"], "protocol": {"vipObjectType": "object",'
+                ' "vipType": "constant", "vipValue": "ospf"}, "route": {"vipObjectType": "object",'
+                ' "vipType": "constant", "vipValue": "external"}}, {"priority-order": ["protocol"],'
+                ' "protocol": {"vipObjectType": "object", "vipType": "constant", "vipValue": '
+                '"connected"}}, {"priority-order": ["protocol"], "protocol": {"vipObjectType": '
+                '"object", "vipType": "constant", "vipValue": "static"}}], "vipObjectType": "tree",'
+                ' "vipPrimaryKey": ["protocol"]}}, "factoryDefault": false, "deviceType": '
+                '["vedge-cloud", "vedge-100", "vedge-100-B", "vedge-100-M", "vedge-100-WM", '
+                '"vedge-1000", "vedge-2000"], "deviceModels": [{"name": "vedge-cloud", '
+                '"displayName": "vEdge Cloud", "deviceType": "vedge"}, {"name": "vedge-100", '
+                '"displayName": "vEdge 100", "deviceType": "vedge"}, {"name": "vedge-100-B",'
+                ' "displayName": "vEdge 100 B", "deviceType": "vedge"}, {"name": "vedge-100-M", '
+                '"displayName": "vEdge 100 M", "deviceType": "vedge"}, {"name": "vedge-100-WM", '
+                '"displayName": "vEdge 100 WM", "deviceType": "vedge"}, {"name": "vedge-1000", '
+                '"displayName": "vEdge 1000", "deviceType": "vedge"}, {"name": "vedge-2000", '
+                '"displayName": "vEdge 2000", "deviceType": "vedge"}]}') == return_data.data
+
+    def test_set_template_omp_vsmart(self):
+        return_data = self.viptela_device.set_template_omp(
+            template_name=_MOCK_TEMPLATE_NAME, template_description=_MOCK_TEMPLATE_DESC,
+            device_type='vsmart')
+        assert 'https://test:8443/dataservice/template/feature' == return_data.url
+        assert ('{"templateName": "mock template", "templateDescription": "mock template '
+                'description", "templateType": "omp-vsmart", "templateMinVersion": "15.0.0",'
+                ' "templateDefinition": {"graceful-restart": {"vipObjectType": "object", '
+                '"vipType": "ignore", "vipValue": "true"}, "send-path-limit": {"vipObjectType": '
+                '"object", "vipType": "ignore", "vipValue": 4}, "shutdown": {"vipObjectType": '
+                '"object", "vipType": "ignore", "vipValue": "false"}, "timers": '
+                '{"advertisement-interval": {"vipObjectType": "object", "vipType": "ignore", '
+                '"vipValue": 1}, "graceful-restart-timer": {"vipObjectType": "object", "vipType": '
+                '"ignore", "vipValue": 43200}, "holdtime": {"vipObjectType": "object", "vipType": '
+                '"ignore", "vipValue": 60}, "eor-timer": {"vipObjectType": "object", "vipType": '
+                '"ignore", "vipValue": 300}}, "send-backup-paths": {"vipObjectType": "object", '
+                '"vipType": "ignore", "vipValue": "false"}, "discard-rejected": {"vipObjectType": '
+                '"object", "vipType": "ignore", "vipValue": "false"}}, "factoryDefault": false, '
+                '"deviceType": ["vsmart"], "deviceModels": ["name", "displayName", '
+                '"deviceType"]}') == return_data.data
+
+    def test_set_policy_vsmart(self):
+        return_data = self.viptela_device.set_policy_vsmart(
+            policy_name=_MOCK_TEMPLATE_NAME, policy_description=_MOCK_TEMPLATE_DESC,
+            policy_configuration=_TEST_DATA)
+        assert 'https://test:8443/dataservice/template/policy/vsmart' == return_data.url
+        assert ('{"policyName": "mock template", "policyDescription": "mock template description", '
+                '"policyDefinition": {"test_data_key": "test_data_value"}}') == return_data.data
+
+    def test_set_template_ntp(self):
+        return_data = self.viptela_device.set_template_ntp(
+            template_name=_MOCK_TEMPLATE_NAME, template_description=_MOCK_TEMPLATE_DESC,
+            ntp_servers=[
+                {'ipv4_address': 'mock_address_1', 'vpn': 'mock_vpn_1',
+                 'version': 'mock_version_1', 'prefer': False},
+                {'ipv4_address': 'mock_address_2', 'vpn': 'mock_vpn_2',
+                 'version': 'mock_version_2', 'prefer': True}
+            ])
+        assert 'https://test:8443/dataservice/template/feature' == return_data.url
+        assert ('{"templateName": "mock template", "templateDescription": "mock template '
+                'description", "templateType": "ntp", "templateMinVersion": "15.0.0", '
+                '"templateDefinition": {"keys": {"trusted": {"vipObjectType": "list", "vipType": '
+                '"ignore"}}, "server": {"vipObjectType": "tree", "vipType": "constant", "vipValue":'
+                ' [{"name": {"vipObjectType": "object", "vipType": "constant", "vipValue": '
+                '"mock_address_1"}, "key": {"vipObjectType": "object", "vipType": "ignore"}, "vpn":'
+                ' {"vipObjectType": "object", "vipType": "ignore", "vipValue": "mock_vpn_1"}, '
+                '"version": {"vipObjectType": "object", "vipType": "ignore", "vipValue": '
+                '"mock_version_1"}, "source-interface": {"vipObjectType": "object", "vipType": '
+                '"ignore"}, "prefer": {"vipObjectType": "object", "vipType": "constant", '
+                '"vipValue": false}, "priority-order": ["name", "key", "vpn", "version", '
+                '"source-interface", "prefer"]}, {"name": {"vipObjectType": "object", "vipType": '
+                '"constant", "vipValue": "mock_address_2"}, "key": {"vipObjectType": "object", '
+                '"vipType": "ignore"}, "vpn": {"vipObjectType": "object", "vipType": "ignore", '
+                '"vipValue": "mock_vpn_2"}, "version": {"vipObjectType": "object", "vipType": '
+                '"ignore", "vipValue": "mock_version_2"}, "source-interface": {"vipObjectType": '
+                '"object", "vipType": "ignore"}, "prefer": {"vipObjectType": "object", "vipType": '
+                '"constant", "vipValue": true}, "priority-order": ["name", "key", "vpn", "version",'
+                ' "source-interface", "prefer"]}], "vipPrimaryKey": ["name"]}}, "factoryDefault": '
+                'false, "deviceType": ["vedge-cloud", "vedge-100", "vedge-100-B", "vedge-100-M", '
+                '"vedge-100-WM", "vedge-1000", "vedge-2000", "vmanage", "vsmart"], "deviceModels": '
+                '[{"name": "vedge-cloud", "displayName": "vEdge Cloud", "deviceType": "vedge"}, '
+                '{"name": "vedge-100", "displayName": "vEdge 100", "deviceType": "vedge"}, {"name":'
+                ' "vedge-100-B", "displayName": "vEdge 100 B", "deviceType": "vedge"}, {"name": '
+                '"vedge-100-M", "displayName": "vEdge 100 M", "deviceType": "vedge"}, {"name": '
+                '"vedge-100-WM", "displayName": "vEdge 100 WM", "deviceType": "vedge"}, {"name": '
+                '"vedge-1000", "displayName": "vEdge 1000", "deviceType": "vedge"}, {"name": '
+                '"vedge-2000", "displayName": "vEdge 2000", "deviceType": "vedge"}, {"name": '
+                '"vmanage", "displayName": "vManage", "deviceType": "vmanage"}, {"name": "vsmart",'
+                ' "displayName": "vSmart", "deviceType": "vsmart"}]}') == return_data.data
+
+    def test_set_template_snmpv2(self):
+        return_data = self.viptela_device.set_template_snmpv2(
+            template_name=_MOCK_TEMPLATE_NAME, template_description=_MOCK_TEMPLATE_DESC,
+            snmp_contact='mock_contact', v2_community='mock_community', shutdown=constants.TRUE)
+        assert 'https://test:8443/dataservice/template/feature' == return_data.url
+        assert ('{"templateName": "mock template", "templateDescription": "mock template '
+                'description", "templateType": "snmp", "templateMinVersion": "15.0.0", '
+                '"templateDefinition": {"shutdown": {"vipObjectType": "object", "vipType": '
+                '"constant", "vipValue": "true"}, "contact": {"vipObjectType": "object", '
+                '"vipType": "constant", "vipValue": "mock_contact"}, "name": {"vipObjectType": '
+                '"object", "vipType": "variable"}, "location": {"vipObjectType": "object", '
+                '"vipType": "variable"}, "view": {"vipType": "constant", "vipValue": [{"name": '
+                '{"vipObjectType": "object", "vipType": "constant", "vipValue": "mock_community"}, '
+                '"viewMode": "add", "priority-order": ["name"]}], "vipObjectType": "tree", '
+                '"vipPrimaryKey": ["name"]}, "trap": {"group": {"vipType": "ignore", "vipValue": '
+                '[], "vipObjectType": "tree", "vipPrimaryKey": ["group-name"]}, "target": '
+                '{"vipType": "ignore", "vipValue": [], "vipObjectType": "tree", "vipPrimaryKey": '
+                '["vpn-id", "ip", "port"]}}}, "factoryDefault": false, "deviceType": '
+                '["vedge-cloud", "vedge-100", "vedge-100-B", "vedge-100-M", "vedge-100-WM", '
+                '"vedge-1000", "vedge-2000", "vmanage", "vsmart"], "deviceModels": [{"name": '
+                '"vedge-cloud", "displayName": "vEdge Cloud", "deviceType": "vedge"}, {"name": '
+                '"vedge-100", "displayName": "vEdge 100", "deviceType": "vedge"}, {"name": '
+                '"vedge-100-B", "displayName": "vEdge 100 B", "deviceType": "vedge"}, {"name": '
+                '"vedge-100-M", "displayName": "vEdge 100 M", "deviceType": "vedge"}, {"name": '
+                '"vedge-100-WM", "displayName": "vEdge 100 WM", "deviceType": "vedge"}, {"name": '
+                '"vedge-1000", "displayName": "vEdge 1000", "deviceType": "vedge"}, {"name": '
+                '"vedge-2000", "displayName": "vEdge 2000", "deviceType": "vedge"}, {"name": '
+                '"vmanage", "displayName": "vManage", "deviceType": "vmanage"}, {"name": "vsmart", '
+                '"displayName": "vSmart", "deviceType": "vsmart"}]}') == return_data.data
+
+    def test_delete_template_raises(self):
+        with pytest.raises(AttributeError) as excinfo:
+            self.viptela_device.delete_template()
+        assert 'Either template_name or template_id is required' == str(excinfo.value)
+
+
+class TestViptelaDeleteMethods(object):
+    """Test set methods of the Viptela API object."""
+
+    def setup(self):
+        self.viptela_device = viptela.Viptela('user', 'pass', 'test', auto_login=False)
+        self.viptela_device.put = self.mock_http_method
+        self.viptela_device.post = self.mock_http_method
+        self.viptela_device.delete = self.mock_http_method
+        self.mock_get_template_feature = mock.MagicMock(
+                data={'data': [
+                    {constants.TEMPLATE_NAME: _MOCK_TEMPLATE_NAME, constants.TEMPLATE_ID: 0},
+                    {constants.TEMPLATE_NAME: _MOCK_TEMPLATE_NAME + '1', constants.TEMPLATE_ID: 1},
+                    {constants.TEMPLATE_NAME: _MOCK_TEMPLATE_NAME + '2', constants.TEMPLATE_ID: 2}
+                ]}
+            )
+        self.viptela_device.get_template_feature = mock.MagicMock(
+            return_value=self.mock_get_template_feature
+        )
+
+    @staticmethod
+    def mock_http_method(session, url, data=None):
+        _ = session
+        return mock.MagicMock(url=url, data=data)
+
+    def test_delete_template_raises(self):
+        with pytest.raises(AttributeError) as excinfo:
+            self.viptela_device.delete_template()
+        assert 'Either template_name or template_id is required' == str(excinfo.value)
+
+    def test_delete_template_w_template_id_no_template_name(self):
+        return_data = self.viptela_device.delete_template(
+            template_name=_MOCK_TEMPLATE_NAME, template_id='1')
+        assert 'https://test:8443/dataservice/template/feature/1' == return_data.url
+
+    def test_delete_template_w_no_template_id_template_name(self):
+        return_data = self.viptela_device.delete_template(
+            template_name=_MOCK_TEMPLATE_NAME,)
+        assert 'https://test:8443/dataservice/template/feature/0' == return_data.url
+
 
 
 

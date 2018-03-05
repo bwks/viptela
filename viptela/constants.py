@@ -55,9 +55,9 @@ POLICY_KEYS = [
 DEVICE_TEMPLATE_KEYS = [
     TEMPLATE_NAME,
     TEMPLATE_DESCRIPTION,
-    'deviceType',
+    DEVICE_TYPE,
     'configType',
-    'factoryDefault',
+    FACTORY_DEFAULT,
     POLICY_ID,
     UID_RANGE,
     GENERAL_TEMPLATES
@@ -80,18 +80,27 @@ HTTP_ERROR_CODES = {
 HTTP_RESPONSE_CODES = {k: v for d in (HTTP_SUCCESS_CODES, HTTP_ERROR_CODES) for k, v in d.items()}
 
 # Various structures containing device model data.
+DISPLAY_NAME = 'displayName'
 VEDGE = 'vedge'
+VEDGE_100 = 'vedge-100'
+VEDGE_100B = 'vedge-100-B'
+VEDGE_100M = 'vedge-100-M'
+VEDGE_100WM = 'vedge-100-WM'
+VEDGE_1000 = 'vedge-1000'
+VEDGE_2000 = 'vedge-2000'
+VEDGE_CLOUD = 'vedge-cloud'
+VMANAGE = 'vmanage'
 VSMART = 'vsmart'
 DEVICE_MODEL_MAP = {
-    'vedge-cloud': {'name': 'vedge-cloud', 'displayName':'vEdge Cloud', 'deviceType': VEDGE},
-    'vedge-100': {'name': 'vedge-100', 'displayName': 'vEdge 100', 'deviceType': VEDGE},
-    'vedge-100-B': {'name': 'vedge-100-B', 'displayName': 'vEdge 100 B', 'deviceType': VEDGE},
-    'vedge-100-M': {'name': 'vedge-100-M', 'displayName': 'vEdge 100 M', 'deviceType': VEDGE},
-    'vedge-100-WM': {'name': 'vedge-100-WM', 'displayName': 'vEdge 100 WM', 'deviceType': VEDGE},
-    'vedge-1000': {'name': 'vedge-1000', 'displayName': 'vEdge 1000', 'deviceType': VEDGE},
-    'vedge-2000': {'name': 'vedge-2000', 'displayName': 'vEdge 2000', 'deviceType': VEDGE},
-    'vmanage': {'name': 'vmanage', 'displayName': 'vManage', 'deviceType': 'vmanage'},
-    VSMART: {'name': 'vsmart', 'displayName': 'vSmart', 'deviceType': VSMART},
+    VEDGE_CLOUD: {NAME: VEDGE_CLOUD, DISPLAY_NAME: 'vEdge Cloud', DEVICE_TYPE: VEDGE},
+    VEDGE_100: {NAME: VEDGE_100, DISPLAY_NAME: 'vEdge 100', DEVICE_TYPE: VEDGE},
+    VEDGE_100B: {NAME: VEDGE_100B, DISPLAY_NAME: 'vEdge 100 B', DEVICE_TYPE: VEDGE},
+    VEDGE_100M: {NAME: VEDGE_100M, DISPLAY_NAME: 'vEdge 100 M', DEVICE_TYPE: VEDGE},
+    VEDGE_100WM: {NAME: VEDGE_100WM, DISPLAY_NAME: 'vEdge 100 WM', DEVICE_TYPE: VEDGE},
+    VEDGE_1000: {NAME: VEDGE_1000, DISPLAY_NAME: 'vEdge 1000', DEVICE_TYPE: VEDGE},
+    VEDGE_2000: {NAME: VEDGE_2000, DISPLAY_NAME: 'vEdge 2000', DEVICE_TYPE: VEDGE},
+    VMANAGE: {NAME: VMANAGE, DISPLAY_NAME: 'vManage', DEVICE_TYPE: VMANAGE},
+    VSMART: {NAME: VSMART, DISPLAY_NAME: 'vSmart', DEVICE_TYPE: VSMART},
 }
 ALL_DEVICE_TYPES = tuple(DEVICE_MODEL_MAP.keys())
 ALL_DEVICE_MODELS = tuple(DEVICE_MODEL_MAP.values())
@@ -103,11 +112,12 @@ _FEATURE = 'feature/'
 _TEMPLATE = '/template/'
 
 # URL paths used in interacting with the API.
-BANNER_PATH = '{0}/settings/configuration/banner'
-BASE_TEMPLATE_PATH = '{0}/template/feature'
+BANNER_PATH_W_BASE = '{0}/settings/configuration/banner'
+BASE_TEMPLATE_PATH_W_BASE = '{0}/template/feature'
 DEVICE_PATH = _TEMPLATE + _DEVICE
 DEVICE_FEATURE_PATH = _TEMPLATE + _DEVICE + _FEATURE
 FEATURE_PATH = _TEMPLATE + _FEATURE
 BASE_POLICY_PATH = _TEMPLATE + 'policy/'
 VEDGE_POLICY_PATH = BASE_POLICY_PATH + VEDGE
 VSMART_POLICY_PATH = BASE_POLICY_PATH + VSMART
+VSMART_POLICY_PATH_W_BASE = '{0}' + VSMART_POLICY_PATH
