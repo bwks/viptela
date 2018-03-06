@@ -595,3 +595,9 @@ class TestGetMethods(object):
         assert return_data.url == (
             'https://test:8443/dataservice/template/feature/object/mock_id'
         )
+
+    def test_get_control_connections(self):
+        return_data = self.viptela_device.get_control_connections(_MOCK_ID)
+        assert return_data.url == (
+            'https://test:8443/dataservice/device/control/connections?deviceId=mock_id'
+        )
