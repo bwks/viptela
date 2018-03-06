@@ -441,6 +441,15 @@ class Viptela(object):
         url = '{0}/device/control/connections?deviceId={1}'.format(self.base_url, device_id)
         return self.get(self.session, url)
 
+    def get_control_connections_history(self, device_id):
+        """
+        Get control connections
+        :param device_id: Device ID
+        :return:  Result named tuple
+        """
+        url = '{0}/device/control/connectionshistory?deviceId={1}'.format(self.base_url, device_id)
+        return self.get(self.session, url)
+
     def set_template_aaa(self, data):
         """
         Set AAA template
