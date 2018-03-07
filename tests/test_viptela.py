@@ -607,3 +607,16 @@ class TestGetMethods(object):
         assert return_data.url == (
             'https://test:8443/dataservice/device/control/connectionshistory?deviceId=mock_id'
         )
+
+    def test_get_routing_table(self):
+        return_data = self.viptela_device.get_routing_table(_MOCK_ID)
+        assert return_data.url == (
+            'https://test:8443/dataservice/device/ip/routetable?deviceId=mock_id'
+        )
+
+    def test_get_interfaces(self):
+        return_data = self.viptela_device.get_interfaces(_MOCK_ID)
+        assert return_data.url == (
+            'https://test:8443/dataservice/device/interface?deviceId=mock_id'
+        )
+

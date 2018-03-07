@@ -443,11 +443,29 @@ class Viptela(object):
 
     def get_control_connections_history(self, device_id):
         """
-        Get control connections
+        Get control connections history
         :param device_id: Device ID
         :return:  Result named tuple
         """
         url = '{0}/device/control/connectionshistory?deviceId={1}'.format(self.base_url, device_id)
+        return self.get(self.session, url)
+
+    def get_routing_table(self, device_id):
+        """
+        Get routing table
+        :param device_id: Device ID
+        :return:  Result named tuple
+        """
+        url = '{0}/device/ip/routetable?deviceId={1}'.format(self.base_url, device_id)
+        return self.get(self.session, url)
+
+    def get_interfaces(self, device_id):
+        """
+         Get interfaces
+         :param device_id: Device ID
+         :return:  Result named tuple
+         """
+        url = '{0}/device/interface?deviceId={1}'.format(self.base_url, device_id)
         return self.get(self.session, url)
 
     def set_template_aaa(self, data):
