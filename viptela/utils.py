@@ -9,7 +9,6 @@ import json
 import logging
 from collections import namedtuple
 
-from viptela import constants
 from . import constants
 
 # Minor difference between Python2 and Python3
