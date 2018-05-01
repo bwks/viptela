@@ -9,12 +9,12 @@ import responses
 import pytest
 
 from viptela import constants, utils
+
 # Minor difference between Python2 and Python3
 try:
     from json.decoder import JSONDecodeError
 except ImportError:
     JSONDecodeError = ValueError
-
 
 
 @responses.activate
@@ -145,6 +145,56 @@ def test_parse_response_error(mock_parse_success):
     mock_return_string = 'mock string'
     mock_parse_success.return_value = mock_return_string
     assert utils.parse_response(resp) == mock_return_string
+
+
+def test_find_feature_template():
+    mock_session = mock.MagicMock(
+        get_template_feature=mock.MagicMock(
+            return_value=mock.MagicMock(data={
+                constants.DATA: [{constants.TEMPLATE_NAME: 'bad_name', constants.TEMPLATE_ID: 1},
+                                 {constants.TEMPLATE_NAME: 'mock_name', constants.TEMPLATE_ID: 2}]
+            })
+        )
+    )
+    assert utils.find_feature_template(mock_session, 'mock_name') == 2
+
+
+def test_find_feature_template_raises():
+    mock_session = mock.MagicMock(
+        get_template_feature=mock.MagicMock(
+            return_value=mock.MagicMock(data={
+                constants.DATA: [{constants.TEMPLATE_NAME: 'bad_name_1', constants.TEMPLATE_ID: 1},
+                                 {constants.TEMPLATE_NAME: 'bad_name_2', constants.TEMPLATE_ID: 2}]
+            })
+        )
+    )
+    with pytest.raises(ValueError) as excinfo:
+        _ = utils.find_feature_template(mock_session, 'mock_name') == 2
+    assert str(excinfo.value) == 'Template not found.'
+
+
+def test_vip_object_default_args():
+    return_data = utils.vip_object()
+    expected = {constants.VIP_OBJECT_TYPE: 'object', constants.VIP_TYPE: constants.IGNORE}
+    assert return_data == expected
+
+
+def test_vip_object_custom_args():
+    object_type = 'mock_object'
+    vip_type = 'mock_type'
+    vip_value = 'mock_value'
+    vip_var_name = 'mock_var_name'
+    vip_pri_key = 'mock_pri_key'
+    return_data = utils.vip_object(
+        vip_object_type=object_type, vip_type=vip_type, vip_value=vip_value,
+        vip_variable_name=vip_var_name, vip_primary_key=vip_pri_key
+    )
+    expected = {'vipObjectType': 'mock_object',
+                'vipPrimaryKey': 'mock_pri_key',
+                'vipType': 'mock_type',
+                'vipValue': 'mock_value',
+                'vipVariableName': 'mock_var_name'}
+    assert return_data == expected
 
 
 def test_check_post_response_no_error():

@@ -4,7 +4,6 @@ Various utilities and helper functions that are implement commonly used features
 
 
 import copy
-import os
 import json
 import logging
 from collections import namedtuple
@@ -113,7 +112,7 @@ def find_feature_template(session, template_name):
     for i in all_templates.data[constants.DATA]:
         if i[constants.TEMPLATE_NAME] == template_name:
             return i[constants.TEMPLATE_ID]
-    raise ValueError('Template not found')
+    raise ValueError('Template not found.')
 
 
 def vip_object(vip_object_type='object', vip_type=constants.IGNORE, vip_value=None,
