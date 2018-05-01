@@ -72,9 +72,10 @@ def parse_http_error(response):
     """
     try:
         json_response = dict()
-        reason = response.json()[constants.ERROR]['details']
-        error = response.json()[constants.ERROR]['message']
-    except ValueError as e:
+        decoded_response = response.json()
+        reason = decoded_response[constants.ERROR]['details']
+        error = decoded_response[constants.ERROR]['message']
+    except JSONDecodeError as e:
         json_response = dict()
         reason = constants.HTTP_RESPONSE_CODES[response.status_code]
         error = e
@@ -152,24 +153,12 @@ def create_template_payload(name, description, template_type, min_version, defin
     }
 
 
-def create_template_dict(template_dir):
-    """Create a dict containing all of the JSON from a template directory for the vManage server."""
-    if not template_dir.endswith('/'):
-        template_dir += '/'
-    template_dict = {}
-    json_files = [f for f in os.listdir(template_dir) if f.endswith(constants.JSON_EXT)]
-    for file in json_files:
-        with open(template_dir + file) as f:
-            template_dict[file.split(constants.JSON_EXT)[0]] = json.loads(f.read())
-    return template_dict
-
-
 def check_post_response(response, raise_error=False):
     """Check to see if a post response contains an error code or not. If so, the error is logged,
     and an exception is raised if required."""
     if not response.error:
         return response
-    logger.debug('Failure in POST operation: {}'.format(response.reason))
+    logger.debug('Failure in POST operation: {}.'.format(response.reason))
     if raise_error:
         raise Exception('Failure in POST operation.')
     return response
