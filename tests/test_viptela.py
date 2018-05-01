@@ -3,6 +3,8 @@
 
 import pytest
 
+import requests
+
 try:
     import mock
 except ImportError:
@@ -10,6 +12,7 @@ except ImportError:
 
 from viptela.exceptions import LoginTimeoutError
 from viptela import constants
+from viptela import exceptions
 from viptela import utils
 from viptela import viptela
 
@@ -30,26 +33,48 @@ def _mock_http_method(session, url, data=None):
     return mock.MagicMock(url=url, data=data)
 
 
-class TestViptelaLogin(object):
+class TestViptelaBase(object):
 
-    def setup(self):
-        self.viptela_device = viptela.Viptela('user', 'pass', 'test', auto_login=False)
+    def test_viptela_disable_warnings_called(self):
+        viptela.requests.packages.urllib3.disable_warnings = mock.Mock()
+        # Assigning to a shorter variable for ease of reading.
+        mock_disable_warnings = viptela.requests.packages.urllib3.disable_warnings
+        _ = viptela.Viptela('user', 'pass', 'test', auto_login=False,
+                            disable_warnings=True)
+        assert mock_disable_warnings.called
+
+    def test_viptela_login(self):
+        viptela_device = viptela.Viptela('user', 'pass', 'test', auto_login=False)
+        login_result = mock.MagicMock(response=mock.MagicMock(text=''))
+        post_mock = mock.MagicMock(return_value=login_result)
+        viptela_device.post = post_mock
+        assert login_result == viptela_device.login()
+
+    def test_viptela_login_bad_creds(self):
+        viptela_device = viptela.Viptela('user', 'pass', 'test', auto_login=False)
+        viptela_device.post = mock.MagicMock(
+            return_value=mock.MagicMock(response=mock.MagicMock(text='<html></html>'))
+        )
+        with pytest.raises(exceptions.LoginCredentialsError) as excinfo:
+            viptela_device.login()
+        assert 'Could not login to device, check user credentials.' == str(excinfo.value)
 
     def test_viptela_login_with_invalid_vmanage_host_raises_login_timeout_error(self):
         with pytest.raises(LoginTimeoutError) as excinfo:
             viptela.Viptela('mock_user', '', 'mock_device', timeout=0.01)
-        assert 'Could not connect to mock_device' == str(excinfo.value)
+        assert 'Could not connect to mock_device.' == str(excinfo.value)
 
     def test_viptela_instance_attributes(self):
-        assert self.viptela_device.user == 'user'
-        assert self.viptela_device.user_pass == 'pass'
-        assert self.viptela_device.vmanage_server == 'test'
-        assert self.viptela_device.vmanage_server_port == 8443
-        assert self.viptela_device.verify is False
-        assert self.viptela_device.disable_warnings is False
-        assert self.viptela_device.timeout == 10
-        assert self.viptela_device.auto_login is False
-        assert self.viptela_device.base_url == 'https://test:8443/dataservice'
+        viptela_device = viptela.Viptela('user', 'pass', 'test', auto_login=False)
+        assert viptela_device.user == 'user'
+        assert viptela_device.user_pass == 'pass'
+        assert viptela_device.vmanage_server == 'test'
+        assert viptela_device.vmanage_server_port == 8443
+        assert viptela_device.verify is False
+        assert viptela_device.disable_warnings is False
+        assert viptela_device.timeout == 10
+        assert viptela_device.auto_login is False
+        assert viptela_device.base_url == 'https://test:8443/dataservice'
 
 
 class TestViptelaStaticMethods(object):

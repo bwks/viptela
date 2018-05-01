@@ -14,6 +14,74 @@ class Viptela(object):
     Class for use with Viptela vManage API.
     """
 
+    def __init__(self, user, user_pass, vmanage_server, vmanage_server_port=8443,
+                 verify=False, disable_warnings=False, timeout=constants.STANDARD_HTTP_TIMEOUT,
+                 auto_login=True):
+        """
+        Init method for Viptela class
+        :param user: API user name
+        :param user_pass: API user password
+        :param vmanage_server: vManage server IP address or Hostname
+        :param vmanage_server_port: vManage API port
+        :param verify: Verify HTTPs certificate verification
+        :param disable_warnings: Disable console warnings if ssl cert invalid
+        :param timeout: Timeout for request response
+        :param auto_login: Automatically login to vManage server
+        """
+        self.user = user
+        self.user_pass = user_pass
+        self.vmanage_server = vmanage_server
+        self.vmanage_server_port = vmanage_server_port
+        self.verify = verify
+        self.timeout = timeout
+        self.disable_warnings = disable_warnings
+
+        if self.disable_warnings:
+            requests.packages.urllib3.disable_warnings()
+
+        self.auto_login = auto_login
+
+        self.base_url = 'https://{0}:{1}/dataservice'.format(
+            self.vmanage_server,
+            self.vmanage_server_port
+        )
+
+        self.session = requests.session()
+        if not self.verify:
+            self.session.verify = self.verify
+
+        # login
+        if self.auto_login:
+            self.login_result = self.login()
+        # Mapping between US and British style spelling.
+        self.get_bgp_neighbors = self.get_bgp_neighbours
+        self.get_ospf_neighbors = self.get_ospf_neighbours
+
+    def login(self):
+        """
+        Login to vManage server
+        :return: Result named tuple
+        """
+        try:
+            login_result = self.post(
+                session=self.session,
+                url='{0}/j_security_check'.format(self.base_url),
+                headers={'Content-Type': 'application/x-www-form-urlencoded'},
+                data={'j_username': self.user, 'j_password': self.user_pass},
+                timeout=self.timeout
+            )
+        except ConnectionError:
+            raise exceptions.LoginTimeoutError(
+                'Could not connect to {0}.'.format(self.vmanage_server)
+            )
+
+        if login_result.response.text.startswith('<html>'):
+            raise exceptions.LoginCredentialsError(
+                'Could not login to device, check user credentials.'
+            )
+        else:
+            return login_result
+
     @staticmethod
     def get(session, url, headers=None, timeout=constants.STANDARD_HTTP_TIMEOUT):
         """
@@ -95,73 +163,22 @@ class Viptela(object):
             session.delete(url=url, headers=headers, data=data, timeout=timeout)
         )
 
-    def __init__(self, user, user_pass, vmanage_server, vmanage_server_port=8443,
-                 verify=False, disable_warnings=False, timeout=constants.STANDARD_HTTP_TIMEOUT,
-                 auto_login=True):
+    def get_all_devices(self):
         """
-        Init method for Viptela class
-        :param user: API user name
-        :param user_pass: API user password
-        :param vmanage_server: vManage server IP address or Hostname
-        :param vmanage_server_port: vManage API port
-        :param verify: Verify HTTPs certificate verification
-        :param disable_warnings: Disable console warnings if ssl cert invalid
-        :param timeout: Timeout for request response
-        :param auto_login: Automatically login to vManage server
-        """
-        self.user = user
-        self.user_pass = user_pass
-        self.vmanage_server = vmanage_server
-        self.vmanage_server_port = vmanage_server_port
-        self.verify = verify
-        self.timeout = timeout
-        self.disable_warnings = disable_warnings
-
-        if self.disable_warnings:
-            requests.packages.urllib3.disable_warnings()
-
-        self.auto_login = auto_login
-
-        self.base_url = 'https://{0}:{1}/dataservice'.format(
-            self.vmanage_server,
-            self.vmanage_server_port
-        )
-
-        self.session = requests.session()
-        if not self.verify:
-            self.session.verify = self.verify
-
-        # login
-        if self.auto_login:
-            self.login_result = self.login()
-        # Mapping between US and British style spelling.
-        self.get_bgp_neighbors = self.get_bgp_neighbours
-        self.get_ospf_neighbors = self.get_ospf_neighbours
-
-    def login(self):
-        """
-        Login to vManage server
+        Get a list of all devices
         :return: Result named tuple
         """
-        try:
-            login_result = self.post(
-                session=self.session,
-                url='{0}/j_security_check'.format(self.base_url),
-                headers={'Content-Type': 'application/x-www-form-urlencoded'},
-                data={'j_username': self.user, 'j_password': self.user_pass},
-                timeout=self.timeout
-            )
-        except ConnectionError:
-            raise exceptions.LoginTimeoutError(
-                'Could not connect to {0}'.format(self.vmanage_server)
-            )
+        url = '{}/device'.format(self.base_url)
+        return self.get(self.session, url)
 
-        if login_result.response.text.startswith('<html>'):
-            raise exceptions.LoginCredentialsError(
-                'Could not login to device, check user credentials'
-            )
-        else:
-            return login_result
+    def get_arp_table(self, device_id):
+        """
+        Get device arp tables
+        :param device_id: device ID
+        :return: Result named tuple
+        """
+        url = '{0}/device/arp?deviceId={1}'.format(self.base_url, device_id)
+        return self.get(self.session, url)
 
     def get_banner(self):
         """
@@ -170,16 +187,6 @@ class Viptela(object):
         """
         url = constants.BANNER_PATH_W_BASE.format(self.base_url)
         return self.get(self.session, url)
-
-    def set_banner(self, banner):
-        """
-        Set vManage banner
-        :param banner: Text of the banner
-        :return: Result named tuple
-        """
-        payload = {'mode': 'on', 'bannerDetail': banner}
-        url = constants.BANNER_PATH_W_BASE.format(self.base_url)
-        return self.put(self.session, url, data=json.dumps(payload))
 
     def get_device_by_type(self, device_type='vedges'):
         """
@@ -192,61 +199,12 @@ class Viptela(object):
         url = '{0}/system/device/{1}'.format(self.base_url, device_type)
         return self.get(self.session, url)
 
-    def get_all_devices(self):
-        """
-        Get a list of all devices
-        :return: Result named tuple
-        """
-        url = '{}/device'.format(self.base_url)
-        return self.get(self.session, url)
-
-    def get_running_config(self, device_uuid, attached=False):
-        """
-        Get running config of a device
-        :param device_uuid: Device's ID
-        :param attached: Device attached config
-        :return: Result named tuple
-        """
-        url = '{}/template/config/'.format(self.base_url)
-        if attached:
-            url += 'attached/{}'.format(device_uuid)
-        else:
-            url += 'running/{}'.format(device_uuid)
-        return self.get(self.session, url)
-
     def get_device_maps(self):
         """
         Get devices geo location data
         :return: Result named tuple
         """
         url = '{0}/group/map/devices'.format(self.base_url)
-        return self.get(self.session, url)
-
-    def get_arp_table(self, device_id):
-        """
-        Get device arp tables
-        :param device_id: device ID
-        :return: Result named tuple
-        """
-        url = '{0}/device/arp?deviceId={1}'.format(self.base_url, device_id)
-        return self.get(self.session, url)
-
-    def get_bgp_summary(self, device_id):
-        """
-        Get BGP summary information
-        :param device_id: device ID
-        :return: Result named tuple
-        """
-        url = '{0}/device/bgp/summary?deviceId={1}'.format(self.base_url, device_id)
-        return self.get(self.session, url)
-
-    def get_bgp_routes(self, device_id):
-        """
-        Get BGP routes
-        :param device_id: device ID
-        :return: Result named tuple
-        """
-        url = '{0}/device/bgp/routes?deviceId={1}'.format(self.base_url, device_id)
         return self.get(self.session, url)
 
     def get_bgp_neighbours(self, device_id):
@@ -258,86 +216,22 @@ class Viptela(object):
         url = '{0}/device/bgp/neighbors?deviceId={1}'.format(self.base_url, device_id)
         return self.get(self.session, url)
 
-    def get_ospf_routes(self, device_id):
+    def get_bgp_routes(self, device_id):
         """
-        Get OSPF routes
+        Get BGP routes
         :param device_id: device ID
         :return: Result named tuple
         """
-        url = '{0}/device/ospf/routes?deviceId={1}'.format(self.base_url, device_id)
+        url = '{0}/device/bgp/routes?deviceId={1}'.format(self.base_url, device_id)
         return self.get(self.session, url)
 
-    def get_ospf_neighbours(self, device_id):
+    def get_bgp_summary(self, device_id):
         """
-        Get OSPF neighbours
+        Get BGP summary information
         :param device_id: device ID
         :return: Result named tuple
         """
-        url = '{0}/device/ospf/neighbor?deviceId={1}'.format(self.base_url, device_id)
-        return self.get(self.session, url)
-
-    def get_ospf_database(self, device_id, summary=False):
-        """
-        Get OSPF database
-        :param device_id: device ID
-        :param summary: get OSPF database summary
-        :return: Result named tuple
-        """
-        if summary:
-            url = '{0}/device/ospf/databasesummary?deviceId={1}'.format(self.base_url, device_id)
-        else:
-            url = '{0}/device/ospf/database?deviceId={1}'.format(self.base_url, device_id)
-        return self.get(self.session, url)
-
-    def get_ospf_interfaces(self, device_id):
-        """
-        Get OSPF interfaces
-        :param device_id: device ID
-        :return: Result named tuple
-        """
-        url = '{0}/device/ospf/interface?deviceId={1}'.format(self.base_url, device_id)
-        return self.get(self.session, url)
-
-    def get_transport_connection(self, device_id):
-        """
-        Get underlying transport details
-        :param device_id: device ID
-        :return: Result named tuple
-        """
-        url = '{0}/device/transport/connection?deviceId={1}'.format(self.base_url, device_id)
-        return self.get(self.session, url)
-
-    def get_tunnel_statistics(self, device_id):
-        """
-        Get tunnel details
-        :param device_id: device ID
-        :return: Result named tuple
-        """
-        url = '{0}/device/tunnel/statistics?deviceId={1}'.format(self.base_url, device_id)
-        return self.get(self.session, url)
-
-    def get_omp_peers(self, device_id, from_vmanage=False):
-        """
-        Get OMP peers
-        :param device_id: device ID
-        :param from_vmanage: Get synced peers from vManage server
-        :return: Result named tuple
-        """
-        url = '{}/device/omp/'.format(self.base_url)
-        if from_vmanage:
-            url += 'synced/peers?deviceId={}'.format(device_id)
-        else:
-            url += 'peers?deviceId={}'.format(device_id)
-
-        return self.get(self.session, url)
-
-    def get_omp_summary(self, device_id):
-        """
-        Get OMP summary
-        :param device_id: device ID
-        :return: Result named tuple
-        """
-        url = '{0}/device/omp/summary?deviceId={1}'.format(self.base_url, device_id)
+        url = '{0}/device/bgp/summary?deviceId={1}'.format(self.base_url, device_id)
         return self.get(self.session, url)
 
     def get_cellular_modem(self, device_id):
@@ -376,15 +270,6 @@ class Viptela(object):
         url = '{0}/device/cellular/radio?deviceId={1}'.format(self.base_url, device_id)
         return self.get(self.session, url)
 
-    def get_cellular_status(self, device_id):
-        """
-        Get Cellular status details
-        :param device_id: device ID
-        :return: Result named tuple
-        """
-        url = '{0}/device/cellular/status?deviceId={1}'.format(self.base_url, device_id)
-        return self.get(self.session, url)
-
     def get_cellular_sessions(self, device_id):
         """
         Get Cellular sessions details
@@ -394,42 +279,13 @@ class Viptela(object):
         url = '{0}/device/cellular/sessions?deviceId={1}'.format(self.base_url, device_id)
         return self.get(self.session, url)
 
-    def get_ipsec_inbound(self, device_id):
+    def get_cellular_status(self, device_id):
         """
-        Get IPsec inbound details
+        Get Cellular status details
         :param device_id: device ID
         :return: Result named tuple
         """
-        url = '{0}/device/ipsec/inbound?deviceId={1}'.format(self.base_url, device_id)
-        return self.get(self.session, url)
-
-    def get_ipsec_outbound(self, device_id):
-        """
-        Get IPsec outbound details
-        :param device_id: device ID
-        :return: Result named tuple
-        """
-        url = '{0}/device/ipsec/outbound?deviceId={1}'.format(self.base_url, device_id)
-        return self.get(self.session, url)
-
-    def get_ipsec_localsa(self, device_id):
-        """
-        Get IPsec local security association details
-        :param device_id: device ID
-        :return: Result named tuple
-        """
-        url = '{0}/device/ipsec/localsa?deviceId={1}'.format(self.base_url, device_id)
-        return self.get(self.session, url)
-
-    def get_template_feature(self, template_id=''):
-        """
-        Get feature templates
-        :param template_id: template ID
-        :return: Result named tuple
-        """
-        url = constants.BASE_TEMPLATE_PATH_W_BASE.format(self.base_url)
-        if template_id:
-            url += '/object/{0}'.format(template_id)
+        url = '{0}/device/cellular/status?deviceId={1}'.format(self.base_url, device_id)
         return self.get(self.session, url)
 
     def get_control_connections(self, device_id):
@@ -450,6 +306,106 @@ class Viptela(object):
         url = '{0}/device/control/connectionshistory?deviceId={1}'.format(self.base_url, device_id)
         return self.get(self.session, url)
 
+    def get_interfaces(self, device_id):
+        """
+         Get interfaces
+         :param device_id: Device ID
+         :return:  Result named tuple
+         """
+        url = '{0}/device/interface?deviceId={1}'.format(self.base_url, device_id)
+        return self.get(self.session, url)
+
+    def get_ipsec_localsa(self, device_id):
+        """
+        Get IPsec local security association details
+        :param device_id: device ID
+        :return: Result named tuple
+        """
+        url = '{0}/device/ipsec/localsa?deviceId={1}'.format(self.base_url, device_id)
+        return self.get(self.session, url)
+
+    def get_ipsec_inbound(self, device_id):
+        """
+        Get IPsec inbound details
+        :param device_id: device ID
+        :return: Result named tuple
+        """
+        url = '{0}/device/ipsec/inbound?deviceId={1}'.format(self.base_url, device_id)
+        return self.get(self.session, url)
+
+    def get_ipsec_outbound(self, device_id):
+        """
+        Get IPsec outbound details
+        :param device_id: device ID
+        :return: Result named tuple
+        """
+        url = '{0}/device/ipsec/outbound?deviceId={1}'.format(self.base_url, device_id)
+        return self.get(self.session, url)
+
+    def get_omp_peers(self, device_id, from_vmanage=False):
+        """
+        Get OMP peers
+        :param device_id: device ID
+        :param from_vmanage: Get synced peers from vManage server
+        :return: Result named tuple
+        """
+        url = '{}/device/omp/'.format(self.base_url)
+        if from_vmanage:
+            url += 'synced/peers?deviceId={}'.format(device_id)
+        else:
+            url += 'peers?deviceId={}'.format(device_id)
+
+        return self.get(self.session, url)
+
+    def get_omp_summary(self, device_id):
+        """
+        Get OMP summary
+        :param device_id: device ID
+        :return: Result named tuple
+        """
+        url = '{0}/device/omp/summary?deviceId={1}'.format(self.base_url, device_id)
+        return self.get(self.session, url)
+
+    def get_ospf_database(self, device_id, summary=False):
+        """
+        Get OSPF database
+        :param device_id: device ID
+        :param summary: get OSPF database summary
+        :return: Result named tuple
+        """
+        if summary:
+            url = '{0}/device/ospf/databasesummary?deviceId={1}'.format(self.base_url, device_id)
+        else:
+            url = '{0}/device/ospf/database?deviceId={1}'.format(self.base_url, device_id)
+        return self.get(self.session, url)
+
+    def get_ospf_interfaces(self, device_id):
+        """
+        Get OSPF interfaces
+        :param device_id: device ID
+        :return: Result named tuple
+        """
+        url = '{0}/device/ospf/interface?deviceId={1}'.format(self.base_url, device_id)
+        return self.get(self.session, url)
+
+    def get_ospf_routes(self, device_id):
+        """
+        Get OSPF routes
+        :param device_id: device ID
+        :return: Result named tuple
+        """
+        url = '{0}/device/ospf/routes?deviceId={1}'.format(self.base_url, device_id)
+        return self.get(self.session, url)
+
+    def get_ospf_neighbours(self, device_id):
+        """
+        Get OSPF neighbours
+        :param device_id: device ID
+        :return: Result named tuple
+        """
+        url = '{0}/device/ospf/neighbor?deviceId={1}'.format(self.base_url, device_id)
+        return self.get(self.session, url)
+
     def get_routing_table(self, device_id):
         """
         Get routing table
@@ -459,14 +415,70 @@ class Viptela(object):
         url = '{0}/device/ip/routetable?deviceId={1}'.format(self.base_url, device_id)
         return self.get(self.session, url)
 
-    def get_interfaces(self, device_id):
+    def get_running_config(self, device_uuid, attached=False):
         """
-         Get interfaces
-         :param device_id: Device ID
-         :return:  Result named tuple
-         """
-        url = '{0}/device/interface?deviceId={1}'.format(self.base_url, device_id)
+        Get running config of a device
+        :param device_uuid: Device's ID
+        :param attached: Device attached config
+        :return: Result named tuple
+        """
+        url = '{}/template/config/'.format(self.base_url)
+        if attached:
+            url += 'attached/{}'.format(device_uuid)
+        else:
+            url += 'running/{}'.format(device_uuid)
         return self.get(self.session, url)
+
+    def get_transport_connection(self, device_id):
+        """
+        Get underlying transport details
+        :param device_id: device ID
+        :return: Result named tuple
+        """
+        url = '{0}/device/transport/connection?deviceId={1}'.format(self.base_url, device_id)
+        return self.get(self.session, url)
+
+    def get_tunnel_statistics(self, device_id):
+        """
+        Get tunnel details
+        :param device_id: device ID
+        :return: Result named tuple
+        """
+        url = '{0}/device/tunnel/statistics?deviceId={1}'.format(self.base_url, device_id)
+        return self.get(self.session, url)
+
+    def get_template_feature(self, template_id=''):
+        """
+        Get feature templates
+        :param template_id: template ID
+        :return: Result named tuple
+        """
+        url = constants.BASE_TEMPLATE_PATH_W_BASE.format(self.base_url)
+        if template_id:
+            url += '/object/{0}'.format(template_id)
+        return self.get(self.session, url)
+
+    def set_banner(self, banner):
+        """
+        Set vManage banner
+        :param banner: Text of the banner
+        :return: Result named tuple
+        """
+        payload = {'mode': 'on', 'bannerDetail': banner}
+        url = constants.BANNER_PATH_W_BASE.format(self.base_url)
+        return self.put(self.session, url, data=json.dumps(payload))
+
+    def set_policy_vsmart(self, policy_name, policy_description, policy_configuration):
+        """
+        vSmart policy
+        """
+        payload = {
+            constants.POLICY_NAME: policy_name,
+            constants.POLICY_DESCRIPTION: policy_description,
+            constants.POLICY_DEFINITION: policy_configuration,
+        }
+        url = constants.VSMART_POLICY_PATH_W_BASE.format(self.base_url)
+        return self.post(self.session, url, data=json.dumps(payload))
 
     def set_template_aaa(self, data):
         """
@@ -565,6 +577,63 @@ class Viptela(object):
         url = constants.BASE_TEMPLATE_PATH_W_BASE.format(self.base_url)
         return self.post(self.session, url, data=json.dumps(payload))
 
+    def set_template_ntp(self, template_name, template_description, ntp_servers=None):
+        """
+        NTP Template
+        """
+
+        def ntp_server_list(server_list):
+            """
+            Build NTP server list
+            """
+            for server in server_list:
+                yield ({
+                    constants.NAME: utils.vip_object(vip_type=constants.CONSTANT,
+                                                     vip_value=server['ipv4_address']),
+                    'key': utils.vip_object(vip_type=constants.IGNORE),
+                    'vpn': utils.vip_object(vip_type=constants.IGNORE, vip_value=server['vpn']),
+                    'version': utils.vip_object(
+                        vip_type=constants.IGNORE, vip_value=server['version']),
+                    'source-interface': utils.vip_object(vip_type=constants.IGNORE),
+                    'prefer': utils.vip_object(
+                        vip_type=constants.CONSTANT, vip_value=server['prefer']),
+                    'priority-order': [
+                        constants.NAME,
+                        'key',
+                        'vpn',
+                        'version',
+                        'source-interface',
+                        'prefer'
+                    ]
+                })
+
+        payload = utils.create_template_payload(
+            name=template_name,
+            description=template_description,
+            template_type='ntp',
+            min_version=constants.V_15,
+            definition={
+                'keys': {
+                    'trusted': {
+                        constants.VIP_OBJECT_TYPE: 'list',
+                        constants.VIP_TYPE: 'ignore'
+                    }
+                },
+                'server': utils.vip_object(
+                    vip_type=constants.CONSTANT,
+                    vip_value=[i for i in ntp_server_list(ntp_servers)],
+                    vip_object_type=constants.TREE,
+                    vip_primary_key=[constants.NAME]
+                ),
+            },
+            device_type=constants.ALL_DEVICE_TYPES,
+            device_models=constants.ALL_DEVICE_MODELS,
+            default=False
+        )
+
+        url = constants.BASE_TEMPLATE_PATH_W_BASE.format(self.base_url)
+        return self.post(self.session, url, data=json.dumps(payload))
+
     def set_template_omp(self, template_name, template_description, device_type):
         """
         Set OMP template.
@@ -650,75 +719,6 @@ class Viptela(object):
             device_type=(
                 [constants.VSMART] if device_type == constants.VSMART else [i for i in vedges]),
             device_models=models,
-            default=False
-        )
-
-        url = constants.BASE_TEMPLATE_PATH_W_BASE.format(self.base_url)
-        return self.post(self.session, url, data=json.dumps(payload))
-
-    def set_policy_vsmart(self, policy_name, policy_description, policy_configuration):
-        """
-        vSmart policy
-        """
-        payload = {
-            constants.POLICY_NAME: policy_name,
-            constants.POLICY_DESCRIPTION: policy_description,
-            constants.POLICY_DEFINITION: policy_configuration,
-        }
-        url = constants.VSMART_POLICY_PATH_W_BASE.format(self.base_url)
-        return self.post(self.session, url, data=json.dumps(payload))
-
-    def set_template_ntp(self, template_name, template_description, ntp_servers=None):
-        """
-        NTP Template
-        """
-
-        def ntp_server_list(server_list):
-            """
-            Build NTP server list
-            """
-            for server in server_list:
-                yield ({
-                    constants.NAME: utils.vip_object(vip_type=constants.CONSTANT,
-                                                     vip_value=server['ipv4_address']),
-                    'key': utils.vip_object(vip_type=constants.IGNORE),
-                    'vpn': utils.vip_object(vip_type=constants.IGNORE, vip_value=server['vpn']),
-                    'version': utils.vip_object(
-                        vip_type=constants.IGNORE, vip_value=server['version']),
-                    'source-interface': utils.vip_object(vip_type=constants.IGNORE),
-                    'prefer': utils.vip_object(
-                        vip_type=constants.CONSTANT, vip_value=server['prefer']),
-                    'priority-order': [
-                        constants.NAME,
-                        'key',
-                        'vpn',
-                        'version',
-                        'source-interface',
-                        'prefer'
-                    ]
-                })
-
-        payload = utils.create_template_payload(
-            name=template_name,
-            description=template_description,
-            template_type='ntp',
-            min_version=constants.V_15,
-            definition={
-                'keys': {
-                    'trusted': {
-                        constants.VIP_OBJECT_TYPE: 'list',
-                        constants.VIP_TYPE: 'ignore'
-                    }
-                },
-                'server': utils.vip_object(
-                    vip_type=constants.CONSTANT,
-                    vip_value=[i for i in ntp_server_list(ntp_servers)],
-                    vip_object_type=constants.TREE,
-                    vip_primary_key=[constants.NAME]
-                ),
-            },
-            device_type=constants.ALL_DEVICE_TYPES,
-            device_models=constants.ALL_DEVICE_MODELS,
             default=False
         )
 
