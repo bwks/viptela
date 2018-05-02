@@ -10,22 +10,34 @@ ERROR = 'error'
 FALSE = 'false'
 IGNORE = 'ignore'
 JSON_EXT = '.json'
+KEY = 'key'
 NAME = 'name'
+PREFER = 'prefer'
 PRIORITY_ORDER = 'priority-order'
 PROTOCOL = 'protocol'
+ROUTE = 'route'
+SOURCE_INTERFACE = 'source-interface'
+TIMERS = 'timers'
 TREE = 'tree'
 TRUE = 'true'
 V_15 = '15.0.0'
 VARIABLE = 'variable'
+VERSION = 'version'
 VIP_OBJECT_TYPE = 'vipObjectType'
 VIP_PRIMARY_KEY = 'vipPrimaryKey'
 VIP_TYPE = 'vipType'
 VIP_VALUE = 'vipValue'
+VPN = 'vpn'
 
 # Keys used in interacting with templates.
+ADVERTISEMENT_INTERVAL = 'advertisement-interval'
 DEVICE_TYPE = 'deviceType'
+EOR_TIMER = 'eor-timer'
 FACTORY_DEFAULT = 'factoryDefault'
 GENERAL_TEMPLATES = 'generalTemplates'
+GRACEFUL_RESTART = 'graceful-restart'
+GRACEFUL_RESTART_TIMER = GRACEFUL_RESTART + '-timer'
+HOLDTIME = 'holdtime'
 POLICY_DEFINITION = 'policyDefinition'
 POLICY_DESCRIPTION = 'policyDescription'
 POLICY_NAME = 'policyName'
@@ -109,9 +121,11 @@ ALL_DEVICE_MODELS = tuple(DEVICE_MODEL_MAP.values())
 # Strings used for building URL paths.
 _DEVICE = 'device/'
 _FEATURE = 'feature/'
+_FORMAT_0 = '{0}'
 _TEMPLATE = '/template/'
 
 # URL paths used in interacting with the API.
+BASE_DEVICE_URL = _FORMAT_0 + '/' + _DEVICE
 BANNER_PATH_W_BASE = '{0}/settings/configuration/banner'
 BASE_TEMPLATE_PATH_W_BASE = '{0}/template/feature'
 DEVICE_PATH = _TEMPLATE + _DEVICE
@@ -120,4 +134,4 @@ FEATURE_PATH = _TEMPLATE + _FEATURE
 BASE_POLICY_PATH = _TEMPLATE + 'policy/'
 VEDGE_POLICY_PATH = BASE_POLICY_PATH + VEDGE
 VSMART_POLICY_PATH = BASE_POLICY_PATH + VSMART
-VSMART_POLICY_PATH_W_BASE = '{0}' + VSMART_POLICY_PATH
+VSMART_POLICY_PATH_W_BASE = _FORMAT_0 + VSMART_POLICY_PATH

@@ -177,7 +177,7 @@ class Viptela(object):
         :param device_id: device ID
         :return: Result named tuple
         """
-        url = '{0}/device/arp?deviceId={1}'.format(self.base_url, device_id)
+        url = (constants.BASE_DEVICE_URL + 'arp?deviceId={1}').format(self.base_url, device_id)
         return self.get(self.session, url)
 
     def get_banner(self):
@@ -213,7 +213,8 @@ class Viptela(object):
         :param device_id: device ID
         :return: Result named tuple
         """
-        url = '{0}/device/bgp/neighbors?deviceId={1}'.format(self.base_url, device_id)
+        url = (constants.BASE_DEVICE_URL + 'bgp/neighbors?deviceId={1}').format(self.base_url,
+                                                                                device_id)
         return self.get(self.session, url)
 
     def get_bgp_routes(self, device_id):
@@ -222,7 +223,8 @@ class Viptela(object):
         :param device_id: device ID
         :return: Result named tuple
         """
-        url = '{0}/device/bgp/routes?deviceId={1}'.format(self.base_url, device_id)
+        url = (constants.BASE_DEVICE_URL + 'bgp/routes?deviceId={1}').format(self.base_url,
+                                                                             device_id)
         return self.get(self.session, url)
 
     def get_bgp_summary(self, device_id):
@@ -231,7 +233,8 @@ class Viptela(object):
         :param device_id: device ID
         :return: Result named tuple
         """
-        url = '{0}/device/bgp/summary?deviceId={1}'.format(self.base_url, device_id)
+        url = (constants.BASE_DEVICE_URL + 'bgp/summary?deviceId={1}').format(self.base_url,
+                                                                              device_id)
         return self.get(self.session, url)
 
     def get_cellular_modem(self, device_id):
@@ -240,7 +243,8 @@ class Viptela(object):
         :param device_id: device ID
         :return: Result named tuple
         """
-        url = '{0}/device/cellular/modem?deviceId={1}'.format(self.base_url, device_id)
+        url = (constants.BASE_DEVICE_URL + 'cellular/modem?deviceId={1}').format(self.base_url,
+                                                                                 device_id)
         return self.get(self.session, url)
 
     def get_cellular_network(self, device_id):
@@ -249,7 +253,8 @@ class Viptela(object):
         :param device_id: device ID
         :return: Result named tuple
         """
-        url = '{0}/device/cellular/network?deviceId={1}'.format(self.base_url, device_id)
+        url = (constants.BASE_DEVICE_URL + 'cellular/network?deviceId={1}').format(self.base_url,
+                                                                                   device_id)
         return self.get(self.session, url)
 
     def get_cellular_profiles(self, device_id):
@@ -258,7 +263,8 @@ class Viptela(object):
         :param device_id: device ID
         :return: Result named tuple
         """
-        url = '{0}/device/cellular/profiles?deviceId={1}'.format(self.base_url, device_id)
+        url = (constants.BASE_DEVICE_URL + 'cellular/profiles?deviceId={1}').format(self.base_url,
+                                                                                    device_id)
         return self.get(self.session, url)
 
     def get_cellular_radio(self, device_id):
@@ -267,7 +273,8 @@ class Viptela(object):
         :param device_id: device ID
         :return: Result named tuple
         """
-        url = '{0}/device/cellular/radio?deviceId={1}'.format(self.base_url, device_id)
+        url = (constants.BASE_DEVICE_URL + 'cellular/radio?deviceId={1}').format(self.base_url,
+                                                                                 device_id)
         return self.get(self.session, url)
 
     def get_cellular_sessions(self, device_id):
@@ -276,7 +283,8 @@ class Viptela(object):
         :param device_id: device ID
         :return: Result named tuple
         """
-        url = '{0}/device/cellular/sessions?deviceId={1}'.format(self.base_url, device_id)
+        url = (constants.BASE_DEVICE_URL + 'cellular/sessions?deviceId={1}').format(self.base_url,
+                                                                                    device_id)
         return self.get(self.session, url)
 
     def get_cellular_status(self, device_id):
@@ -285,7 +293,8 @@ class Viptela(object):
         :param device_id: device ID
         :return: Result named tuple
         """
-        url = '{0}/device/cellular/status?deviceId={1}'.format(self.base_url, device_id)
+        url = (constants.BASE_DEVICE_URL + 'cellular/status?deviceId={1}').format(self.base_url,
+                                                                                  device_id)
         return self.get(self.session, url)
 
     def get_control_connections(self, device_id):
@@ -294,7 +303,8 @@ class Viptela(object):
         :param device_id: Device ID
         :return:  Result named tuple
         """
-        url = '{0}/device/control/connections?deviceId={1}'.format(self.base_url, device_id)
+        url = (constants.BASE_DEVICE_URL + 'control/connections?deviceId={1}').format(self.base_url,
+                                                                                      device_id)
         return self.get(self.session, url)
 
     def get_control_connections_history(self, device_id):
@@ -303,7 +313,9 @@ class Viptela(object):
         :param device_id: Device ID
         :return:  Result named tuple
         """
-        url = '{0}/device/control/connectionshistory?deviceId={1}'.format(self.base_url, device_id)
+        url = (constants.BASE_DEVICE_URL + 'control/connectionshistory?deviceId={1}').format(
+            self.base_url, device_id
+        )
         return self.get(self.session, url)
 
     def get_interfaces(self, device_id):
@@ -312,7 +324,8 @@ class Viptela(object):
          :param device_id: Device ID
          :return:  Result named tuple
          """
-        url = '{0}/device/interface?deviceId={1}'.format(self.base_url, device_id)
+        url = (constants.BASE_DEVICE_URL + 'interface?deviceId={1}').format(self.base_url,
+                                                                            device_id)
         return self.get(self.session, url)
 
     def get_ipsec_localsa(self, device_id):
@@ -321,7 +334,8 @@ class Viptela(object):
         :param device_id: device ID
         :return: Result named tuple
         """
-        url = '{0}/device/ipsec/localsa?deviceId={1}'.format(self.base_url, device_id)
+        url = (constants.BASE_DEVICE_URL + 'ipsec/localsa?deviceId={1}').format(self.base_url,
+                                                                                device_id)
         return self.get(self.session, url)
 
     def get_ipsec_inbound(self, device_id):
@@ -330,7 +344,8 @@ class Viptela(object):
         :param device_id: device ID
         :return: Result named tuple
         """
-        url = '{0}/device/ipsec/inbound?deviceId={1}'.format(self.base_url, device_id)
+        url = (constants.BASE_DEVICE_URL + 'ipsec/inbound?deviceId={1}').format(self.base_url,
+                                                                                device_id)
         return self.get(self.session, url)
 
     def get_ipsec_outbound(self, device_id):
@@ -339,7 +354,8 @@ class Viptela(object):
         :param device_id: device ID
         :return: Result named tuple
         """
-        url = '{0}/device/ipsec/outbound?deviceId={1}'.format(self.base_url, device_id)
+        url = (constants.BASE_DEVICE_URL + 'ipsec/outbound?deviceId={1}').format(self.base_url,
+                                                                                 device_id)
         return self.get(self.session, url)
 
     def get_omp_peers(self, device_id, from_vmanage=False):
@@ -349,7 +365,7 @@ class Viptela(object):
         :param from_vmanage: Get synced peers from vManage server
         :return: Result named tuple
         """
-        url = '{}/device/omp/'.format(self.base_url)
+        url = (constants.BASE_DEVICE_URL + 'omp/').format(self.base_url)
         if from_vmanage:
             url += 'synced/peers?deviceId={}'.format(device_id)
         else:
@@ -363,7 +379,8 @@ class Viptela(object):
         :param device_id: device ID
         :return: Result named tuple
         """
-        url = '{0}/device/omp/summary?deviceId={1}'.format(self.base_url, device_id)
+        url = (constants.BASE_DEVICE_URL + 'omp/summary?deviceId={1}').format(self.base_url,
+                                                                              device_id)
         return self.get(self.session, url)
 
     def get_ospf_database(self, device_id, summary=False):
@@ -374,9 +391,12 @@ class Viptela(object):
         :return: Result named tuple
         """
         if summary:
-            url = '{0}/device/ospf/databasesummary?deviceId={1}'.format(self.base_url, device_id)
+            url = (constants.BASE_DEVICE_URL + 'ospf/databasesummary?deviceId={1}').format(
+                self.base_url, device_id
+            )
         else:
-            url = '{0}/device/ospf/database?deviceId={1}'.format(self.base_url, device_id)
+            url = (constants.BASE_DEVICE_URL + 'ospf/database?deviceId={1}').format(self.base_url,
+                                                                                    device_id)
         return self.get(self.session, url)
 
     def get_ospf_interfaces(self, device_id):
@@ -385,7 +405,8 @@ class Viptela(object):
         :param device_id: device ID
         :return: Result named tuple
         """
-        url = '{0}/device/ospf/interface?deviceId={1}'.format(self.base_url, device_id)
+        url = (constants.BASE_DEVICE_URL + 'ospf/interface?deviceId={1}').format(self.base_url,
+                                                                                 device_id)
         return self.get(self.session, url)
 
     def get_ospf_routes(self, device_id):
@@ -394,7 +415,8 @@ class Viptela(object):
         :param device_id: device ID
         :return: Result named tuple
         """
-        url = '{0}/device/ospf/routes?deviceId={1}'.format(self.base_url, device_id)
+        url = (constants.BASE_DEVICE_URL + 'ospf/routes?deviceId={1}').format(self.base_url,
+                                                                              device_id)
         return self.get(self.session, url)
 
     def get_ospf_neighbours(self, device_id):
@@ -403,7 +425,8 @@ class Viptela(object):
         :param device_id: device ID
         :return: Result named tuple
         """
-        url = '{0}/device/ospf/neighbor?deviceId={1}'.format(self.base_url, device_id)
+        url = (constants.BASE_DEVICE_URL + 'ospf/neighbor?deviceId={1}').format(self.base_url,
+                                                                                device_id)
         return self.get(self.session, url)
 
     def get_routing_table(self, device_id):
@@ -412,7 +435,8 @@ class Viptela(object):
         :param device_id: Device ID
         :return:  Result named tuple
         """
-        url = '{0}/device/ip/routetable?deviceId={1}'.format(self.base_url, device_id)
+        url = (constants.BASE_DEVICE_URL + 'ip/routetable?deviceId={1}').format(self.base_url,
+                                                                                device_id)
         return self.get(self.session, url)
 
     def get_running_config(self, device_uuid, attached=False):
@@ -435,7 +459,9 @@ class Viptela(object):
         :param device_id: device ID
         :return: Result named tuple
         """
-        url = '{0}/device/transport/connection?deviceId={1}'.format(self.base_url, device_id)
+        url = (constants.BASE_DEVICE_URL + 'transport/connection?deviceId={1}').format(
+            self.base_url, device_id
+        )
         return self.get(self.session, url)
 
     def get_tunnel_statistics(self, device_id):
@@ -444,7 +470,8 @@ class Viptela(object):
         :param device_id: device ID
         :return: Result named tuple
         """
-        url = '{0}/device/tunnel/statistics?deviceId={1}'.format(self.base_url, device_id)
+        url = (constants.BASE_DEVICE_URL + 'tunnel/statistics?deviceId={1}').format(self.base_url,
+                                                                                    device_id)
         return self.get(self.session, url)
 
     def get_template_feature(self, template_id=''):
@@ -590,20 +617,21 @@ class Viptela(object):
                 yield ({
                     constants.NAME: utils.vip_object(vip_type=constants.CONSTANT,
                                                      vip_value=server['ipv4_address']),
-                    'key': utils.vip_object(vip_type=constants.IGNORE),
-                    'vpn': utils.vip_object(vip_type=constants.IGNORE, vip_value=server['vpn']),
-                    'version': utils.vip_object(
-                        vip_type=constants.IGNORE, vip_value=server['version']),
-                    'source-interface': utils.vip_object(vip_type=constants.IGNORE),
-                    'prefer': utils.vip_object(
-                        vip_type=constants.CONSTANT, vip_value=server['prefer']),
+                    constants.KEY: utils.vip_object(vip_type=constants.IGNORE),
+                    constants.VPN: utils.vip_object(vip_type=constants.IGNORE,
+                                                    vip_value=server[constants.VPN]),
+                    constants.VERSION: utils.vip_object(
+                        vip_type=constants.IGNORE, vip_value=server[constants.VERSION]),
+                    constants.SOURCE_INTERFACE: utils.vip_object(vip_type=constants.IGNORE),
+                    constants.PREFER: utils.vip_object(
+                        vip_type=constants.CONSTANT, vip_value=server[constants.PREFER]),
                     'priority-order': [
                         constants.NAME,
-                        'key',
-                        'vpn',
-                        'version',
-                        'source-interface',
-                        'prefer'
+                        constants.KEY,
+                        constants.VPN,
+                        constants.VERSION,
+                        constants.SOURCE_INTERFACE,
+                        constants.PREFER
                     ]
                 })
 
@@ -647,25 +675,25 @@ class Viptela(object):
         vedges = [d for d in constants.ALL_DEVICE_TYPES if constants.VEDGE in d]
 
         template_definition = {
-                'graceful-restart': utils.vip_object(vip_value=constants.TRUE),
+                constants.GRACEFUL_RESTART: utils.vip_object(vip_value=constants.TRUE),
                 'send-path-limit': utils.vip_object(vip_value=4),
                 'shutdown': utils.vip_object(vip_value=constants.FALSE),
-                'timers': {
-                    'advertisement-interval': utils.vip_object(vip_value=1),
-                    'graceful-restart-timer': utils.vip_object(vip_value=43200),
-                    'holdtime': utils.vip_object(vip_value=60),
-                    'eor-timer': utils.vip_object(vip_value=300),
+                constants.TIMERS: {
+                    constants.ADVERTISEMENT_INTERVAL: utils.vip_object(vip_value=1),
+                    constants.GRACEFUL_RESTART_TIMER: utils.vip_object(vip_value=43200),
+                    constants.HOLDTIME: utils.vip_object(vip_value=60),
+                    constants.EOR_TIMER: utils.vip_object(vip_value=300),
                 }
             }
 
         if device_type == constants.VEDGE:
             template_definition.update({
                 'ecmp-limit': utils.vip_object(vip_value=4),
-                'timers': {
-                    'advertisement-interval': utils.vip_object(vip_value=1),
-                    'graceful-restart-timer': utils.vip_object(vip_value=43200),
-                    'holdtime': utils.vip_object(vip_value=60),
-                    'eor-timer': utils.vip_object(vip_value=300),
+                constants.TIMERS: {
+                    constants.ADVERTISEMENT_INTERVAL: utils.vip_object(vip_value=1),
+                    constants.GRACEFUL_RESTART_TIMER: utils.vip_object(vip_value=43200),
+                    constants.HOLDTIME: utils.vip_object(vip_value=60),
+                    constants.EOR_TIMER: utils.vip_object(vip_value=300),
                 },
                 'advertise': {
                     constants.VIP_TYPE: constants.CONSTANT,
@@ -673,12 +701,12 @@ class Viptela(object):
                         {
                             constants.PRIORITY_ORDER: [
                                 constants.PROTOCOL,
-                                'route'
+                                constants.ROUTE
                             ],
                             constants.PROTOCOL: utils.vip_object(vip_type=constants.CONSTANT,
                                                                  vip_value='ospf'),
-                            'route': utils.vip_object(vip_type=constants.CONSTANT,
-                                                      vip_value='external'),
+                            constants.ROUTE: utils.vip_object(vip_type=constants.CONSTANT,
+                                                              vip_value='external'),
                         },
                         {
                             constants.PRIORITY_ORDER: [

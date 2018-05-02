@@ -21,7 +21,7 @@ logger = logging.getLogger(__name__)
 
 # parse_response will return a namedtuple object
 Result = namedtuple('Result', [
-    'ok', 'status_code', 'error', 'reason', 'data', 'response'
+    'ok', 'status_code', constants.ERROR, 'reason', constants.DATA, 'response'
 ])
 
 
